@@ -54,7 +54,14 @@ regex_config_file	=	open(regex_config_path, 'rt', encoding=encoding)
 
 data_dict		=	json.load(regex_config_file)
 
-print_false_positives	=	False
+print_false_positives	=	True
+excluded_tags		=	[
+				'JUDGE',
+				'COURT',
+				'RESPONDENT',
+				'PETITIONER',
+				'LAWYER'
+				]	# TO EASE TESTING
 
 #######################################
 
@@ -65,7 +72,7 @@ def main() -> int:
 	text_base_df['text']	=	text_base_df['text'].str.replace('\\n','\n',regex=False)
 	text_base_df['text']	=	text_base_df['text'].str.replace('\\t','\t',regex=False)
 	text_base_df['text']	=	text_base_df['text'].str.replace('\\r','\r',regex=False)
-	print(text_base_df)
+	# print(text_base_df)
 	print(f'Loaded {text_base_path}')
 	
 	###################################################
@@ -77,11 +84,16 @@ def main() -> int:
 		set_df		=	pd.read_csv(set_file, sep='\t')
 		
 		for j in data_dict[i]['regex_patterns']:
+			if j in excluded_tags:
+				print(f'Not computing {j} (see excluded_tags)')
+				continue
 			print(f'Starting {j}')
 			
 			for k in data_dict[i]['regex_patterns'][j]:
 				# print(f'Compiling {k}')
 				local_regex		=	re.compile(k)
+				
+				local_regex_has_target	=	'target' in dict(local_regex.groupindex)
 				
 				count_true_positive	=	0
 				count_false_positive	=	0
@@ -102,15 +114,24 @@ def main() -> int:
 					expected_results		=	set_df.loc[(set_df['annotation_label'] == j) & (set_df['text_id'] == m)]
 					
 					for n in regex_result:
-						start	=	n.start()
-						end	=	n.end()
+						start	=	None
+						end	=	None
+						if local_regex_has_target:
+							start	=	n.start('target')
+							end	=	n.end('target')
+						else:
+							start	=	n.start()
+							end	=	n.end()
 						# print(n)
 						
 						if expected_results.loc[(expected_results['annotation_start'] == start) & (expected_results['annotation_end'] == end)].shape[0] > 0:
 							local_count_true_positive	+=	1
 						else:
 							if print_false_positives:
-								print(f'False positive: {n}')
+								if local_regex_has_target:
+									print(f'False positive: {n.group("target")}')
+								else:
+									print(f'False positive: {n}')
 							local_count_false_positive	+=	1
 					
 					local_count_false_negative	=	expected_results.shape[0] - local_count_true_positive
@@ -120,7 +141,18 @@ def main() -> int:
 					count_false_negative		+=	local_count_false_negative
 				
 				# print(f'{k}\t{count_true_positive}\t{count_false_positive}\t{count_false_negative}')
-				print(f'{k}\t{count_true_positive/(count_true_positive+count_false_positive)}\t{count_true_positive/(count_true_positive+count_false_negative)}')
+				# print(f'{k}\t{count_true_positive/(count_true_positive+count_false_positive)}\t{count_true_positive/(count_true_positive+count_false_negative)}')
+				
+				
+				print(f'{k}\t',end='')
+				try:
+					print(f'{count_true_positive/(count_true_positive+count_false_positive)}\t',end='')
+				except ZeroDivisionError:
+					print(f'0.0\t',end='')
+				try:
+					print(f'{count_true_positive/(count_true_positive+count_false_negative)}\t',end='')
+				except ZeroDivisionError:
+					print(f'0.0')
 		
 		set_file.close()
 	
