@@ -1,0 +1,12 @@
+{
+	"NER_TRAIN_PREAMBLE"	:	{
+		"csv_path"			:	"data/NER_TRAIN_PREAMBLE.csv",
+		"regex_patterns"	:	{
+			"COURT"	:	[
+				"([hH]igh|[sS]upreme)\\s[cC]ourt\\s[oO]f\\s[A-Z].*?\\b[aA]t( [A-Z].*?\\b)+",
+				"([A-Z].*?\\b [bB]ench [oO]f [A-Z].*?\\b )?([hH]igh|[sS]upreme)\\s+[cC]ourt\\s+[oO]f(,?( [A-Za-z][^\\n ]*\\b|\\s?[:;\\.]))+(\\s+[aA]t\\n{0,1}[^\\n]+)?",
+				"(?<=[iI]n [tT]he )([A-Z]\\S* )*([cC]ourt|[tT]ribunal|[sS]ession)s?( [A-Z][^\n ]*)*"
+			]
+		}
+	}
+}

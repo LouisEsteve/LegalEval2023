@@ -1,12 +1,15 @@
 import re
 import time
 import pandas as pd
+import json
 
 #######################################
 
 encoding	=	'UTF-8'
+
 data_path	=	'data'
 
+"""
 data_dict	=	{
 					'NER_TRAIN_PREAMBLE'	:	{
 						'csv_path'			:	f'{data_path}/NER_TRAIN_PREAMBLE.csv',
@@ -43,6 +46,13 @@ data_dict	=	{
 						}
 					}
 				}
+"""
+
+regex_config_path	=	'regex_config.json'
+
+regex_config_file	=	open(regex_config_path, 'rt', encoding=encoding)
+
+data_dict		=	json.load(regex_config_file)
 
 #######################################
 
@@ -120,3 +130,5 @@ if __name__ ==	'__main__':
 	t		=	time.time()
 	result	=	main()
 	print(f'Program ended with status {str(result)} in {str(time.time()-t)}s')
+
+regex_config_file.close()
