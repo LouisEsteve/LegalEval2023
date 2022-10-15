@@ -5,7 +5,7 @@ df = pd.read_csv('NER_TRAIN_PREAMBLE.csv',encoding='UTF-8',sep='\t')
 data = df['annotation_text']
 label = df['annotation_label']
 
-# random_state=None
+# random_state=None : Use the global random state instance from numpy.random. Calling the function multiple times will reuse the same instance, and will produce different results.
 X_train, X_test, y_train, y_test = train_test_split(data, label, test_size=0.2, random_state=None)
 
 
