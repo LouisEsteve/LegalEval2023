@@ -60,7 +60,8 @@ excluded_tags		=	[
 				'COURT',
 				'RESPONDENT',
 				'PETITIONER',
-				'LAWYER'
+				'LAWYER',
+				'CASE_NUMBER'
 				]	# TO EASE TESTING
 
 #######################################
@@ -113,6 +114,8 @@ def main() -> int:
 					
 					expected_results		=	set_df.loc[(set_df['annotation_label'] == j) & (set_df['text_id'] == m)]
 					
+					# print(len(list(regex_result)),end='')
+					
 					for n in regex_result:
 						start	=	None
 						end	=	None
@@ -139,6 +142,8 @@ def main() -> int:
 					count_true_positive		+=	local_count_true_positive
 					count_false_positive		+=	local_count_false_positive
 					count_false_negative		+=	local_count_false_negative
+					
+					# print('OK')
 				
 				# print(f'{k}\t{count_true_positive}\t{count_false_positive}\t{count_false_negative}')
 				# print(f'{k}\t{count_true_positive/(count_true_positive+count_false_positive)}\t{count_true_positive/(count_true_positive+count_false_negative)}')
