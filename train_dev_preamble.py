@@ -2,6 +2,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 df = pd.read_csv('NER_TRAIN_PREAMBLE.csv',encoding='UTF-8',sep='\t')
+
 data = df['annotation_text']
 label = df['annotation_label']
 
