@@ -54,14 +54,17 @@ regex_config_file	=	open(regex_config_path, 'rt', encoding=encoding)
 
 data_dict		=	json.load(regex_config_file)
 
+print_true_positives	=	False
 print_false_positives	=	True
+print_false_negatives	=	True
 excluded_tags		=	[
 				'JUDGE',
 				'COURT',
 				'RESPONDENT',
 				'PETITIONER',
 				'LAWYER',
-				'CASE_NUMBER'
+				# 'CASE_NUMBER',
+				'DATE'
 				]	# TO EASE TESTING
 
 #######################################
@@ -116,6 +119,8 @@ def main() -> int:
 					
 					# print(len(list(regex_result)),end='')
 					
+					true_positive_offsets_memory	=	[]
+					
 					for n in regex_result:
 						start	=	None
 						end	=	None
@@ -128,6 +133,12 @@ def main() -> int:
 						# print(n)
 						
 						if expected_results.loc[(expected_results['annotation_start'] == start) & (expected_results['annotation_end'] == end)].shape[0] > 0:
+							if print_true_positives:
+								if local_regex_has_target:
+									print(f'True positive: {n.group("target")}')
+								else:
+									print(f'True positive: {n}')
+							true_positive_offsets_memory.append((start, end))
 							local_count_true_positive	+=	1
 						else:
 							if print_false_positives:
@@ -137,6 +148,18 @@ def main() -> int:
 									print(f'False positive: {n}')
 							local_count_false_positive	+=	1
 					
+					if print_false_negatives:
+						start_offsets		=	[p[0] for p in true_positive_offsets_memory]
+						end_offsets		=	[p[1] for p in true_positive_offsets_memory]
+						
+						ER_start_offsets	=	list(expected_results['annotation_start'])
+						ER_end_offsets		=	list(expected_results['annotation_end'])
+						ER_annotation_texts	=	list(expected_results['annotation_text'])
+						
+						for p in range(len(ER_start_offsets)):
+							if (ER_start_offsets[p] not in start_offsets) or (ER_end_offsets[p] not in end_offsets):
+								print(f'False negative: {ER_annotation_texts[p]}')
+						
 					local_count_false_negative	=	expected_results.shape[0] - local_count_true_positive
 					
 					count_true_positive		+=	local_count_true_positive
@@ -155,7 +178,7 @@ def main() -> int:
 				except ZeroDivisionError:
 					print(f'0.0\t',end='')
 				try:
-					print(f'{count_true_positive/(count_true_positive+count_false_negative)}\t',end='')
+					print(f'{count_true_positive/(count_true_positive+count_false_negative)}\t')
 				except ZeroDivisionError:
 					print(f'0.0')
 		
