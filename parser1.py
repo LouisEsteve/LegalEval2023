@@ -3,9 +3,9 @@ from os import listdir
 from os.path import exists
 import re
 
-data_path					=	'data'
+data_path			=	'data'
 
-encoding					=	'UTF-8'
+encoding			=	'UTF-8'
 
 #sentence_pattern    	 	 =   '(?s)[A-Z][^((?<![A-Z][A-Za-z]*)\\.)\\?!]*'
 #sentence_regex      	 	 =   re.compile(sentence_pattern)
@@ -14,17 +14,19 @@ csv_separator       		=   '\t'
 csv_replacements    		=   [
     ['\t', '\\t'],
     ['\n', '\\n'],
-    ['\r', '\\r']
+    ['\r', '\\r'],
+    ['"', '\\"'],
+    ["'", "\\'"]
 ]
 
-tab							=	'\t'
-tab_replacement				=	'\\t'
-linefeed					=	'\n'
+tab				=	'\t'
+tab_replacement			=	'\\t'
+linefeed			=	'\n'
 linefeed_replacement		=	'\\n'
-carriage_return				=	'\r'
+carriage_return			=	'\r'
 carriage_return_replacement	=	'\\r'
 
-text_dict					=	{}
+text_dict			=	{}
 
 def main():
     files = listdir(data_path)
@@ -147,7 +149,11 @@ def main():
     text_base_path  =   f'{data_path}/text_base.csv'
     f               =   open(text_base_path,'wt',encoding=encoding)
     # s               =   '\n'.join(['\t'.join([i,text_dict[i].replace('\t','\\t').replace('\n','\\n') for i in text_dict])])
-    s               =   'id\ttext\n' + '\n'.join([f"{i}\t{text_dict[i].replace(tab,tab_replacement).replace(linefeed,linefeed_replacement).replace(carriage_return,carriage_return_replacement)}" for i in text_dict])
+    # s               =   'id\ttext\n' + '\n'.join([f"{i}\t{text_dict[i].replace(tab,tab_replacement).replace(linefeed,linefeed_replacement).replace(carriage_return,carriage_return_replacement)}" for i in text_dict])
+    for i in text_dict:
+        for j in csv_replacements:
+            text_dict[i]	=	text_dict[i].replace(j[0],j[1])
+    s               =   'id\ttext\n' + '\n'.join([f"{i}\t{text_dict[i]}" for i in text_dict])
     f.write(s)
     print(f'Wrote {text_base_path}')
     f.close()

@@ -54,17 +54,21 @@ regex_config_file	=	open(regex_config_path, 'rt', encoding=encoding)
 
 data_dict		=	json.load(regex_config_file)
 
-print_true_positives	=	False
+print_true_positives	=	True
 print_false_positives	=	True
 print_false_negatives	=	True
 excluded_tags		=	[
 				'JUDGE',
 				'COURT',
 				'RESPONDENT',
-				'PETITIONER',
+				# 'PETITIONER',
 				'LAWYER',
-				# 'CASE_NUMBER',
-				'DATE'
+				'CASE_NUMBER',
+				'DATE',
+				'PRECEDENT',
+				'PROVISION',
+				'STATUTE',
+				'GPE'
 				]	# TO EASE TESTING
 
 #######################################
@@ -76,6 +80,8 @@ def main() -> int:
 	text_base_df['text']	=	text_base_df['text'].str.replace('\\n','\n',regex=False)
 	text_base_df['text']	=	text_base_df['text'].str.replace('\\t','\t',regex=False)
 	text_base_df['text']	=	text_base_df['text'].str.replace('\\r','\r',regex=False)
+	text_base_df['text']	=	text_base_df['text'].str.replace('\\"','"',regex=False)
+	text_base_df['text']	=	text_base_df['text'].str.replace("\\'","'",regex=False)
 	# print(text_base_df)
 	print(f'Loaded {text_base_path}')
 	
