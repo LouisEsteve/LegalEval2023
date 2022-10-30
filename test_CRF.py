@@ -38,8 +38,8 @@ relevant_features	=	[
 					'ent_type'
 				]
 
-look_behind		=	2
-look_ahead		=	2
+look_behind		=	1
+look_ahead		=	1
 
 features_memory_train_path	=	'features_memory_train.csv'
 features_memory_dev_path	=	'features_memory_dev.csv'
@@ -47,7 +47,7 @@ load_features_memory	=	True
 # load_features_memory	=	False
 save_features_memory	=	True
 
-model_path		=	'CRF3.pl'
+model_path		=	'CRF2.pl'
 load_model		=	True
 save_model		=	True
 
