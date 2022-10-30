@@ -20,9 +20,23 @@ for i in text_id_list:
 
 index_limit	=	floor(len(unique_id_list)*0.8)
 
-train_ids	=	pd.Series(unique_id_list[:index_limit])
+# train_ids	=	pd.Series(unique_id_list[:index_limit])
+train_ids	=	[]
+dev_ids		=	[]
+step		=	20
+len_unique_id_list	=	len(unique_id_list)
+for i in range(0,len_unique_id_list,step):
+	bot_id	=	i
+	top_id	=	min(len_unique_id_list,i+step)
+	mid_id	=	bot_id + floor((top_id-bot_id)*train_size)
+	train_ids	+=	unique_id_list[bot_id:mid_id]
+	dev_ids		+=	unique_id_list[mid_id:top_id]
+# dev_ids		=	pd.Series(unique_id_list[index_limit:])
+
+train_ids	=	pd.Series(train_ids)
+dev_ids		=	pd.Series(dev_ids)
+
 train_ids.name	=	'id'
-dev_ids		=	pd.Series(unique_id_list[index_limit:])
 dev_ids.name	=	'id'
 
 train		=	df.merge(train_ids,left_on='id',right_on='id')
