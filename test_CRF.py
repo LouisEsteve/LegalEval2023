@@ -29,31 +29,66 @@ spacy_model		=	'en_core_web_sm'
 relevant_features	=	[
 					'text'		,
 					'__len__'	,
+					'lemma_'	,
 					'pos_'		,
 					'tag_'		,
 					'cluster'	,
 					'is_alpha'	,
 					'is_punct'	,
+					'is_stop'	,
 					'shape_'	,
-					'ent_type'
+					# 'ent_type'
+					'ent_type_'	,
+					'ent_iob_'	,
+					'dep_'
 				]
 
-look_behind		=	1
-look_ahead		=	1
+irrelevant_features	=	[
+					'text'		,
+					'__len__'	,
+					'len__'		,
+					# 'lemma_'	,
+					# 'pos_'		,
+					'tag_'		,
+					'cluster'	,
+					# 'is_alpha'	,
+					'is_punct'	,
+					# 'is_stop'	,
+					'shape_'	,
+					'ent_type_'	,
+					'ent_iob_'	,
+					# 'dep_'
+				]
 
-features_memory_train_path	=	'features_memory_train.csv'
-features_memory_dev_path	=	'features_memory_dev.csv'
+look_behind		=	4
+look_ahead		=	4
+
+# features_memory_train_path	=	'features_memory_train.csv'
+features_memory_train_path	=	'features_memory_train2.csv'
+# features_memory_dev_path	=	'features_memory_dev.csv'
+features_memory_dev_path	=	'features_memory_dev2.csv'
 load_features_memory	=	True
 # load_features_memory	=	False
 save_features_memory	=	True
 
-model_path		=	'CRF2.pl'
+model_path		=	'CRF9.pl'
 load_model		=	True
 save_model		=	True
 
-training		=	True
-# training		=	False
+# solver			=	'lbfgs'
+solver			=	'arow'
+
+# training		=	True
+training		=	False
 max_epoch		=	150
+gamma			=	1.0	# default -> 1
+# variance		=	1000000.0
+variance		=	1.0
+
+# all_possible_transitions	=	True
+all_possible_transitions	=	False
+# all_possible_states		=	True
+all_possible_states		=	False
 
 # https://readthedocs.org/projects/sklearn-crfsuite/downloads/pdf/latest/
 
@@ -64,6 +99,14 @@ def main() -> int:
 	text_base_df	=	pd.read_csv(text_base_train_path, encoding=encoding, sep=sep
 	# , nrows=3000
 	)
+	text_base_df['text']	=	text_base_df['text'].str.replace('\\n','\n',regex=False)
+	text_base_df['text']	=	text_base_df['text'].str.replace('\\t','\t',regex=False)
+	text_base_df['text']	=	text_base_df['text'].str.replace('\\r','\r',regex=False)
+	text_base_df['text']	=	text_base_df['text'].str.replace('\\"','"',regex=False)
+	text_base_df['text']	=	text_base_df['text'].str.replace("\\'","'",regex=False)
+	
+	
+	
 	preamble_df	=	pd.read_csv(annot_preamble_path, encoding=encoding, sep=sep)
 	judgement_df	=	pd.read_csv(annot_judgement_path, encoding=encoding, sep=sep)
 	
@@ -80,6 +123,9 @@ def main() -> int:
 		for i in X_features:
 			# del(i['y_value'])
 			i.pop('y_value')
+			for j in irrelevant_features:
+				if j in i:
+					i.pop(j)
 		
 		
 		y_values	=	features_df['y_value'].to_list()
@@ -196,12 +242,20 @@ def main() -> int:
 		CRF_model	=	sklearn_crfsuite.CRF(
 			# algorithm='lbfgs',
 			# algorithm='l2sgd',
-			algorithm='arow',
+			# algorithm='arow',
+			algorithm=solver,
 			# algorithm='pa',
 			# c1=0.1,
 			# c2=0.1,
+			# c1=5.0,
+			# c2=5.0,
 			max_iterations=max_epoch,
-			all_possible_transitions=True,
+			# gamma=gamma if gamma is not None else 1,
+			gamma=None if solver!='AROW' else gamma,
+			# all_possible_transitions=True,
+			all_possible_transitions=all_possible_transitions,
+			all_possible_states=all_possible_states,
+			variance=variance,
 			verbose=True
 		)
 	
@@ -209,9 +263,9 @@ def main() -> int:
 		print('\nTraining...')
 		CRF_model.fit(X_features, y_values)
 	
-	if save_model:
-		joblib.dump(CRF_model, model_path)
-		print(f'Saved {model_path}')
+		if save_model:
+			joblib.dump(CRF_model, model_path)
+			print(f'Saved {model_path}')
 	
 	print('TRAIN:')
 	
@@ -281,9 +335,13 @@ def main() -> int:
 		features_df	=	pd.read_csv(features_memory_dev_path,encoding=encoding,sep=sep, index_col=0) #FIXED
 		X_features	=	features_df.to_dict('records')
 		
+		
 		for i in X_features:
 			# del(i['y_value'])
 			i.pop('y_value')
+			for j in irrelevant_features:
+				if j in i:
+					i.pop(j)
 		
 		
 		y_values	=	features_df['y_value'].to_list()
