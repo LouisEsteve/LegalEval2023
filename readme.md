@@ -11,6 +11,7 @@ Aussi, il est possible de modifier `excluded_tags` pour que le système ignore o
 
 `test_CRF.py` permet de tester différentes configurations de CRF/features sur la classification NER.
 Renseignez un nom de fichier dans `model_path`, et le modèle généré y sera sauvegardé ; à ce sujet, `load_model`, `save_model`, et `training` peuvent être en `True` ou `False`.
+À noter qu'il me fallait ici toute la base en TRAIN/DEV, j'ai donc fait un script alternatif de split (corpus_splitter_v2.py), je ne sais pas lequel on utilisera à la fin, je vous laisse me dire.
 
 ## TRAIN/DEV
 
