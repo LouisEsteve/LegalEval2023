@@ -1,6 +1,6 @@
 import time
 import re
-import spacy
+# import spacy
 # import xml.etree.ElementTree as ET
 from os import listdir
 from os.path import exists
@@ -45,23 +45,40 @@ relevant_features	=	[
 
 irrelevant_features	=	[
 					'text'		,
-					'__len__'	,
-					'len__'		,
+					# '__len__'	,
+					# 'len__'		,
 					# 'lemma_'	,
 					# 'pos_'		,
 					'tag_'		,
 					'cluster'	,
-					# 'is_alpha'	,
+					'is_alpha'	,
 					'is_punct'	,
-					# 'is_stop'	,
-					'shape_'	,
+					'is_stop'	,
+					# 'shape_'	,
 					'ent_type_'	,
 					'ent_iob_'	,
 					# 'dep_'
 				]
 
-look_behind		=	4
-look_ahead		=	4
+labels_to_erase		=	[
+					'STATUTE'	,	# -> REGEX
+					'PROVISION'	,	# -> REGEX
+					'CASE_NUMBER'	,	# -> REGEX ?
+					'COURT'		,	# -> REGEX ?
+					'DATE'		,	# -> REGEX ?
+					'PRECEDENT'	,
+					'PETITIONER'	,
+					'RESPONDENT'	,
+					# 'JUDGE'		,
+					'LAWYER'	,
+					'WITNESS'	,
+					'OTHER_PERSON'	,
+					'ORG'		,
+					'GPE'
+				]
+
+look_behind		=	3
+look_ahead		=	3
 
 # features_memory_train_path	=	'features_memory_train.csv'
 features_memory_train_path	=	'features_memory_train2.csv'
@@ -71,22 +88,25 @@ load_features_memory	=	True
 # load_features_memory	=	False
 save_features_memory	=	True
 
-model_path		=	'CRF9.pl'
+model_path		=	'CRF_JUDGE_7.pl'
 load_model		=	True
 save_model		=	True
 
 # solver			=	'lbfgs'
 solver			=	'arow'
 
-# training		=	True
-training		=	False
-max_epoch		=	150
-gamma			=	1.0	# default -> 1
+training		=	True
+# training		=	False
+max_epoch		=	200
+gamma			=	0.1	# default -> 1
 # variance		=	1000000.0
 variance		=	1.0
+epsilon			=	1e-0	# default -> 1e-5
+c1			=	0.45	# default -> 0.0
+c2			=	0.85	# default -> 1.0
 
-# all_possible_transitions	=	True
-all_possible_transitions	=	False
+all_possible_transitions	=	True
+# all_possible_transitions	=	False
 # all_possible_states		=	True
 all_possible_states		=	False
 
@@ -129,6 +149,7 @@ def main() -> int:
 		
 		
 		y_values	=	features_df['y_value'].to_list()
+		y_values	=	['NONE' if i in labels_to_erase else i for i in y_values]
 		print(f'Loaded {features_memory_train_path}')
 	else:
 		
@@ -245,17 +266,16 @@ def main() -> int:
 			# algorithm='arow',
 			algorithm=solver,
 			# algorithm='pa',
-			# c1=0.1,
-			# c2=0.1,
-			# c1=5.0,
-			# c2=5.0,
+			c1=None if solver.lower()!='lbfgs' else c1,
+			c2=None if solver.lower() not in ['lbfgs','l2sgd'] else c2,
 			max_iterations=max_epoch,
 			# gamma=gamma if gamma is not None else 1,
-			gamma=None if solver!='AROW' else gamma,
+			gamma=None if solver.lower()!='arow' else gamma,
 			# all_possible_transitions=True,
 			all_possible_transitions=all_possible_transitions,
 			all_possible_states=all_possible_states,
-			variance=variance,
+			variance=None if solver.lower()!='arow' else variance,
+			epsilon=None if solver.lower()=='l2sgd' else epsilon,
 			verbose=True
 		)
 	
@@ -345,6 +365,7 @@ def main() -> int:
 		
 		
 		y_values	=	features_df['y_value'].to_list()
+		y_values	=	['NONE' if i in labels_to_erase else i for i in y_values]
 		print(f'Loaded {features_memory_dev_path}')
 	else:
 		
