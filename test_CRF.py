@@ -24,7 +24,8 @@ text_base_dev_path	=	'CUSTOM_NER_DEV_TEXT_BASE.csv'
 annot_preamble_path	=	'data/NER_TRAIN_PREAMBLE.csv'
 annot_judgement_path	=	'data/NER_TRAIN_JUDGEMENT.csv'
 
-spacy_model		=	'en_core_web_sm'
+# spacy_model		=	'en_core_web_sm'
+spacy_model		=	'en_core_web_lg'
 
 relevant_features	=	[
 					'text'		,
@@ -37,27 +38,45 @@ relevant_features	=	[
 					'is_punct'	,
 					'is_stop'	,
 					'shape_'	,
-					# 'ent_type'
+					# 'ent_type'	,
 					'ent_type_'	,
 					'ent_iob_'	,
-					'dep_'
+					'dep_'		,
+					'is_quote'	,
+					'is_bracket'	,
+					'head'		,
+					'lex'		,
+					'left_edge'	,
+					'right_edge'	,
+					'lower_'	,
+					'is_digit'	,
+					'morph'
 				]
 
 irrelevant_features	=	[
 					'text'		,
-					# '__len__'	,
-					# 'len__'		,
+					'__len__'	,
 					# 'lemma_'	,
-					# 'pos_'		,
-					'tag_'		,
+					'pos_'		,
+					# 'tag_'		,
 					'cluster'	,
 					'is_alpha'	,
 					'is_punct'	,
 					'is_stop'	,
-					# 'shape_'	,
-					'ent_type_'	,
+					'shape_'	,
+					'ent_type'	,
+					# 'ent_type_'	,
 					'ent_iob_'	,
-					# 'dep_'
+					# 'dep_'		,
+					'is_quote'	,
+					'is_bracket'	,
+					# 'head'		,
+					'lex'		,
+					'left_edge'	,
+					'right_edge'	,
+					'lower_'	,
+					'is_digit'	,
+					'morph'
 				]
 
 labels_to_erase		=	[
@@ -67,12 +86,12 @@ labels_to_erase		=	[
 					'COURT'		,	# -> REGEX ?
 					'DATE'		,	# -> REGEX ?
 					'PRECEDENT'	,
-					'PETITIONER'	,
-					'RESPONDENT'	,
+					# 'PETITIONER'	,
+					# 'RESPONDENT'	,
 					# 'JUDGE'		,
-					'LAWYER'	,
-					'WITNESS'	,
-					'OTHER_PERSON'	,
+					# 'LAWYER'	,
+					# 'WITNESS'	,
+					# 'OTHER_PERSON'	,
 					'ORG'		,
 					'GPE'
 				]
@@ -81,29 +100,29 @@ look_behind		=	3
 look_ahead		=	3
 
 # features_memory_train_path	=	'features_memory_train.csv'
-features_memory_train_path	=	'features_memory_train2.csv'
+features_memory_train_path	=	'features_memory_train3.csv'
 # features_memory_dev_path	=	'features_memory_dev.csv'
-features_memory_dev_path	=	'features_memory_dev2.csv'
+features_memory_dev_path	=	'features_memory_dev3.csv'
 load_features_memory	=	True
 # load_features_memory	=	False
 save_features_memory	=	True
 
-model_path		=	'CRF_JUDGE_7.pl'
+model_path		=	'CRF_MULTI_11.pl'
 load_model		=	True
 save_model		=	True
 
-# solver			=	'lbfgs'
-solver			=	'arow'
+solver			=	'lbfgs'
+# solver			=	'arow'
 
 training		=	True
 # training		=	False
-max_epoch		=	200
+max_epoch		=	175
 gamma			=	0.1	# default -> 1
 # variance		=	1000000.0
 variance		=	1.0
 epsilon			=	1e-0	# default -> 1e-5
-c1			=	0.45	# default -> 0.0
-c2			=	0.85	# default -> 1.0
+c1			=	0.0	# default -> 0.0
+c2			=	1.0	# default -> 1.0
 
 all_possible_transitions	=	True
 # all_possible_transitions	=	False
@@ -133,19 +152,31 @@ def main() -> int:
 	annot_df	=	pd.concat((preamble_df,judgement_df))
 	# print(annot_df)
 	
+	del(preamble_df)
+	del(judgement_df)
+	
 	X_features	=	[]
 	y_values	=	[]
 	
 	if load_features_memory and exists(features_memory_train_path):
-		features_df	=	pd.read_csv(features_memory_train_path,encoding=encoding,sep=sep, index_col=0) #FIXED
+		# features_df	=	pd.read_csv(features_memory_train_path,encoding=encoding,sep=sep, index_col=0) #FIXED
+		features_df	=	pd.read_csv(features_memory_train_path,encoding=encoding,sep=sep, index_col=0, usecols=[i.lstrip('_') for i in relevant_features if i not in irrelevant_features] + ['y_value'], na_values='N/A') #FIXED #IMPROVED
 		X_features	=	features_df.to_dict('records')
 		
 		for i in X_features:
 			# del(i['y_value'])
-			i.pop('y_value')
+			try:
+				i.pop('y_value')
+			except:
+				pass
+			"""
 			for j in irrelevant_features:
 				if j in i:
-					i.pop(j)
+					try:
+						i.pop(j)
+					except:
+						pass
+			"""
 		
 		
 		y_values	=	features_df['y_value'].to_list()
@@ -352,16 +383,25 @@ def main() -> int:
 	y_values	=	[]
 	
 	if load_features_memory and exists(features_memory_dev_path):
-		features_df	=	pd.read_csv(features_memory_dev_path,encoding=encoding,sep=sep, index_col=0) #FIXED
+		# features_df	=	pd.read_csv(features_memory_dev_path,encoding=encoding,sep=sep, index_col=0) #FIXED
+		features_df	=	pd.read_csv(features_memory_dev_path,encoding=encoding,sep=sep, index_col=0, usecols=[i.lstrip('_') for i in relevant_features if i not in irrelevant_features] + ['y_value'], na_values='N/A') #FIXED #IMPROVED
 		X_features	=	features_df.to_dict('records')
 		
 		
 		for i in X_features:
 			# del(i['y_value'])
-			i.pop('y_value')
+			try:
+				i.pop('y_value')
+			except:
+				pass
+			"""
 			for j in irrelevant_features:
 				if j in i:
-					i.pop(j)
+					try:
+						i.pop(j)
+					except:
+						pass
+			"""
 		
 		
 		y_values	=	features_df['y_value'].to_list()
