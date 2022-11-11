@@ -59,15 +59,15 @@ irrelevant_features	=	[
 					# 'lemma_'	,
 					'pos_'		,
 					# 'tag_'		,
-					'cluster'	,
+					# 'cluster'	,
 					'is_alpha'	,
 					'is_punct'	,
 					'is_stop'	,
-					'shape_'	,
+					# 'shape_'	,
 					'ent_type'	,
 					# 'ent_type_'	,
 					'ent_iob_'	,
-					# 'dep_'		,
+					'dep_'		,
 					'is_quote'	,
 					'is_bracket'	,
 					# 'head'		,
@@ -85,13 +85,13 @@ labels_to_erase		=	[
 					'CASE_NUMBER'	,	# -> REGEX ?
 					'COURT'		,	# -> REGEX ?
 					'DATE'		,	# -> REGEX ?
-					'PRECEDENT'	,
-					# 'PETITIONER'	,
-					# 'RESPONDENT'	,
-					# 'JUDGE'		,
-					# 'LAWYER'	,
-					# 'WITNESS'	,
-					# 'OTHER_PERSON'	,
+					# 'PRECEDENT'	,
+					'PETITIONER'	,
+					'RESPONDENT'	,
+					'JUDGE'		,
+					'LAWYER'	,
+					'WITNESS'	,
+					'OTHER_PERSON'	,
 					'ORG'		,
 					'GPE'
 				]
@@ -107,17 +107,17 @@ load_features_memory	=	True
 # load_features_memory	=	False
 save_features_memory	=	True
 
-model_path		=	'CRF_MULTI_11.pl'
+model_path		=	'CRF_PRECEDENT2_1.pl'
 load_model		=	True
 save_model		=	True
 
-solver			=	'lbfgs'
-# solver			=	'arow'
+# solver			=	'lbfgs'
+solver			=	'arow'
 
 training		=	True
 # training		=	False
-max_epoch		=	175
-gamma			=	0.1	# default -> 1
+max_epoch		=	100
+gamma			=	1.0	# default -> 1
 # variance		=	1000000.0
 variance		=	1.0
 epsilon			=	1e-0	# default -> 1e-5
@@ -135,6 +135,8 @@ all_possible_states		=	False
 
 def main() -> int:
 	#TRAIN
+	"""
+	# MOVED IN FEATURE GENERATION SECTION
 	text_base_df	=	pd.read_csv(text_base_train_path, encoding=encoding, sep=sep
 	# , nrows=3000
 	)
@@ -143,7 +145,7 @@ def main() -> int:
 	text_base_df['text']	=	text_base_df['text'].str.replace('\\r','\r',regex=False)
 	text_base_df['text']	=	text_base_df['text'].str.replace('\\"','"',regex=False)
 	text_base_df['text']	=	text_base_df['text'].str.replace("\\'","'",regex=False)
-	
+	"""
 	
 	
 	preamble_df	=	pd.read_csv(annot_preamble_path, encoding=encoding, sep=sep)
@@ -160,7 +162,10 @@ def main() -> int:
 	
 	if load_features_memory and exists(features_memory_train_path):
 		# features_df	=	pd.read_csv(features_memory_train_path,encoding=encoding,sep=sep, index_col=0) #FIXED
-		features_df	=	pd.read_csv(features_memory_train_path,encoding=encoding,sep=sep, index_col=0, usecols=[i.lstrip('_') for i in relevant_features if i not in irrelevant_features] + ['y_value'], na_values='N/A') #FIXED #IMPROVED
+		# features_df	=	pd.read_csv(features_memory_train_path,encoding=encoding,sep=sep, index_col=0, usecols=[i.lstrip('_') for i in relevant_features if i not in irrelevant_features] + ['y_value'], na_values='N/A') #FIXED #IMPROVED
+		features_df	=	pd.read_csv(features_memory_train_path,encoding=encoding,sep=sep, index_col=0, na_values='N/A')[[i.lstrip('_') for i in relevant_features if i not in irrelevant_features] + ['y_value']] #FIXED #IMPROVED
+		print(features_df.columns)
+		# print([i.lstrip('_') for i in relevant_features if i not in irrelevant_features] + ['y_value'])
 		X_features	=	features_df.to_dict('records')
 		
 		for i in X_features:
@@ -183,6 +188,15 @@ def main() -> int:
 		y_values	=	['NONE' if i in labels_to_erase else i for i in y_values]
 		print(f'Loaded {features_memory_train_path}')
 	else:
+		# MOVED FROM EARLIER
+		text_base_df	=	pd.read_csv(text_base_train_path, encoding=encoding, sep=sep
+		# , nrows=3000
+		)
+		text_base_df['text']	=	text_base_df['text'].str.replace('\\n','\n',regex=False)
+		text_base_df['text']	=	text_base_df['text'].str.replace('\\t','\t',regex=False)
+		text_base_df['text']	=	text_base_df['text'].str.replace('\\r','\r',regex=False)
+		text_base_df['text']	=	text_base_df['text'].str.replace('\\"','"',regex=False)
+		text_base_df['text']	=	text_base_df['text'].str.replace("\\'","'",regex=False)
 		
 		nlp		=	spacy.load(spacy_model)
 		
@@ -375,9 +389,18 @@ def main() -> int:
 	###########################################################################################################################
 	
 	print('DEV:')
+	"""
+	# MOVED INTO FEATURE GENERATION SECTION
 	text_base_df	=	pd.read_csv(text_base_dev_path, encoding=encoding, sep=sep
 	# , nrows=3000
 	)
+	
+	text_base_df['text']	=	text_base_df['text'].str.replace('\\n','\n',regex=False)
+	text_base_df['text']	=	text_base_df['text'].str.replace('\\t','\t',regex=False)
+	text_base_df['text']	=	text_base_df['text'].str.replace('\\r','\r',regex=False)
+	text_base_df['text']	=	text_base_df['text'].str.replace('\\"','"',regex=False)
+	text_base_df['text']	=	text_base_df['text'].str.replace("\\'","'",regex=False)
+	"""
 	
 	X_features	=	[]
 	y_values	=	[]
@@ -385,6 +408,7 @@ def main() -> int:
 	if load_features_memory and exists(features_memory_dev_path):
 		# features_df	=	pd.read_csv(features_memory_dev_path,encoding=encoding,sep=sep, index_col=0) #FIXED
 		features_df	=	pd.read_csv(features_memory_dev_path,encoding=encoding,sep=sep, index_col=0, usecols=[i.lstrip('_') for i in relevant_features if i not in irrelevant_features] + ['y_value'], na_values='N/A') #FIXED #IMPROVED
+		print(features_df.columns)
 		X_features	=	features_df.to_dict('records')
 		
 		
@@ -408,6 +432,16 @@ def main() -> int:
 		y_values	=	['NONE' if i in labels_to_erase else i for i in y_values]
 		print(f'Loaded {features_memory_dev_path}')
 	else:
+		# MOVED FROM EARLIER
+		text_base_df	=	pd.read_csv(text_base_dev_path, encoding=encoding, sep=sep
+		# , nrows=3000
+		)
+		
+		text_base_df['text']	=	text_base_df['text'].str.replace('\\n','\n',regex=False)
+		text_base_df['text']	=	text_base_df['text'].str.replace('\\t','\t',regex=False)
+		text_base_df['text']	=	text_base_df['text'].str.replace('\\r','\r',regex=False)
+		text_base_df['text']	=	text_base_df['text'].str.replace('\\"','"',regex=False)
+		text_base_df['text']	=	text_base_df['text'].str.replace("\\'","'",regex=False)
 		
 		nlp		=	spacy.load(spacy_model)
 		
