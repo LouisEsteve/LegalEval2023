@@ -4,6 +4,7 @@ import re
 # import xml.etree.ElementTree as ET
 from os import listdir
 from os.path import exists
+import numpy as np
 import pandas as pd
 import joblib
 import sklearn_crfsuite
@@ -56,7 +57,7 @@ relevant_features	=	[
 irrelevant_features	=	[
 					'text'		,
 					'__len__'	,
-					# 'lemma_'	,
+					'lemma_'	,
 					'pos_'		,
 					# 'tag_'		,
 					# 'cluster'	,
@@ -67,7 +68,7 @@ irrelevant_features	=	[
 					'ent_type'	,
 					# 'ent_type_'	,
 					'ent_iob_'	,
-					'dep_'		,
+					# 'dep_'		,
 					'is_quote'	,
 					'is_bracket'	,
 					# 'head'		,
@@ -78,6 +79,33 @@ irrelevant_features	=	[
 					'is_digit'	,
 					'morph'
 				]
+
+dtype			=	{
+					'text'		:	str,
+					# '__len__'	:	np.int8,
+					'len__'		:	np.int8,
+					'lemma_'	:	str,
+					'pos_'		:	'category',
+					'tag_'		:	'category',
+					'cluster'	:	np.int32,
+					'is_alpha'	:	bool,
+					'is_punct'	:	bool,
+					'is_stop'	:	bool,
+					'shape_'	:	str,
+					# 'ent_type'	,
+					'ent_type_'	:	'category',
+					'ent_iob_'	:	'category',
+					'dep_'		:	'category',
+					'is_quote'	:	bool,
+					'is_bracket'	:	bool,
+					'head'		:	str,
+					# 'lex'		,
+					'left_edge'	:	str,
+					'right_edge'	:	str,
+					'lower_'	:	str,
+					'is_digit'	:	bool,
+					'morph'		:	str
+				}
 
 labels_to_erase		=	[
 					'STATUTE'	,	# -> REGEX
@@ -107,7 +135,7 @@ load_features_memory	=	True
 # load_features_memory	=	False
 save_features_memory	=	True
 
-model_path		=	'CRF_PRECEDENT2_1.pl'
+model_path		=	'CRF_PRECEDENT2_3.pl'
 load_model		=	True
 save_model		=	True
 
@@ -116,7 +144,7 @@ solver			=	'arow'
 
 training		=	True
 # training		=	False
-max_epoch		=	100
+max_epoch		=	200
 gamma			=	1.0	# default -> 1
 # variance		=	1000000.0
 variance		=	1.0
@@ -163,8 +191,10 @@ def main() -> int:
 	if load_features_memory and exists(features_memory_train_path):
 		# features_df	=	pd.read_csv(features_memory_train_path,encoding=encoding,sep=sep, index_col=0) #FIXED
 		# features_df	=	pd.read_csv(features_memory_train_path,encoding=encoding,sep=sep, index_col=0, usecols=[i.lstrip('_') for i in relevant_features if i not in irrelevant_features] + ['y_value'], na_values='N/A') #FIXED #IMPROVED
-		features_df	=	pd.read_csv(features_memory_train_path,encoding=encoding,sep=sep, index_col=0, na_values='N/A')[[i.lstrip('_') for i in relevant_features if i not in irrelevant_features] + ['y_value']] #FIXED #IMPROVED
+		# features_df	=	pd.read_csv(features_memory_train_path,encoding=encoding,sep=sep, index_col=0, na_values='N/A')[[i.lstrip('_') for i in relevant_features if i not in irrelevant_features] + ['y_value']] #FIXED #IMPROVED
+		features_df	=	pd.read_csv(features_memory_train_path,encoding=encoding,sep=sep, index_col=0, na_values='N/A',dtype=dtype)[[i.lstrip('_') for i in relevant_features if i not in irrelevant_features] + ['y_value']] #FIXED #IMPROVED
 		print(features_df.columns)
+		# print(features_df.memory_usage(deep=True))
 		# print([i.lstrip('_') for i in relevant_features if i not in irrelevant_features] + ['y_value'])
 		X_features	=	features_df.to_dict('records')
 		
@@ -186,6 +216,7 @@ def main() -> int:
 		
 		y_values	=	features_df['y_value'].to_list()
 		y_values	=	['NONE' if i in labels_to_erase else i for i in y_values]
+		del(features_df)
 		print(f'Loaded {features_memory_train_path}')
 	else:
 		# MOVED FROM EARLIER
@@ -197,6 +228,7 @@ def main() -> int:
 		text_base_df['text']	=	text_base_df['text'].str.replace('\\r','\r',regex=False)
 		text_base_df['text']	=	text_base_df['text'].str.replace('\\"','"',regex=False)
 		text_base_df['text']	=	text_base_df['text'].str.replace("\\'","'",regex=False)
+		
 		
 		nlp		=	spacy.load(spacy_model)
 		
@@ -407,10 +439,10 @@ def main() -> int:
 	
 	if load_features_memory and exists(features_memory_dev_path):
 		# features_df	=	pd.read_csv(features_memory_dev_path,encoding=encoding,sep=sep, index_col=0) #FIXED
-		features_df	=	pd.read_csv(features_memory_dev_path,encoding=encoding,sep=sep, index_col=0, usecols=[i.lstrip('_') for i in relevant_features if i not in irrelevant_features] + ['y_value'], na_values='N/A') #FIXED #IMPROVED
+		# features_df	=	pd.read_csv(features_memory_dev_path,encoding=encoding,sep=sep, index_col=0, usecols=[i.lstrip('_') for i in relevant_features if i not in irrelevant_features] + ['y_value'], na_values='N/A') #FIXED #IMPROVED
+		features_df	=	pd.read_csv(features_memory_dev_path,encoding=encoding,sep=sep, index_col=0, na_values='N/A',dtype=dtype)[[i.lstrip('_') for i in relevant_features if i not in irrelevant_features] + ['y_value']] #FIXED #IMPROVED
 		print(features_df.columns)
 		X_features	=	features_df.to_dict('records')
-		
 		
 		for i in X_features:
 			# del(i['y_value'])
@@ -430,6 +462,7 @@ def main() -> int:
 		
 		y_values	=	features_df['y_value'].to_list()
 		y_values	=	['NONE' if i in labels_to_erase else i for i in y_values]
+		del(features_df)
 		print(f'Loaded {features_memory_dev_path}')
 	else:
 		# MOVED FROM EARLIER
