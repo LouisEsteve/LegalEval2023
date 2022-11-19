@@ -164,65 +164,6 @@ def features_and_values_for_CRF(text_base_path: str, features_memory_path: str):
 	
 	columns_to_consider	=	[i for i in features_df.columns if i not in ['y_value','text_id','offset_start','offset_end']]
 	
-	"""
-	i_count	=	1
-	i_limit	=	len(all_text_ids)
-	for i in all_text_ids:
-		print(f'Generating CRF features for text {i_count:>6} / {i_limit} : {i}', end='\r')
-		df_for_local_text	=	features_df[features_df['text_id']==i].copy() #FIXED
-		for j in range(-config["look_behind"],config["look_ahead"]+1):
-			if j == 0:
-				continue
-			prefix	=	f'{"" if j < 0 else "+"}{j}:'
-			for k in columns_to_consider:
-				new_column_name				=	f'{prefix}{k}'
-				# df_for_local_text[new_column_name]	=	df_for_local_text[k].shift(j)
-				
-				
-				# new_column				=	df_for_local_text[k].shift(j)
-				new_column				=	df_for_local_text[k].shift(-j)
-				# print(df_for_local_text[k])
-				# print(new_column)
-				
-				# df_for_local_text			=	df_for_local_text.assign(new_column)
-				# df_for_local_text			=	df_for_local_text.assign(kwargs={new_column_name:new_column})
-				# df_for_local_text			=	df_for_local_text.assign(new_column_name:new_column)
-				df_for_local_text[new_column_name]	=	new_column
-				# df_for_local_text.loc[,new_column_name]	=	new_column
-				# df_for_local_text.insert(loc=-1,column=new_column_name,value=new_column)
-				# df_for_local_text.loc[:,new_column_name]	=	new_column
-				# print(df_for_local_text)
-				# exit()
-		y_values.append(df_for_local_text['y_value'].to_list())
-		# df_for_local_text.pop(['y_value','text_id','offset_start','offset_end']) #TRYING
-		
-		
-		df_for_local_text.pop('y_value')
-		df_for_local_text.pop('text_id')
-		
-		new_doc	=	df_for_local_text.to_dict('records')
-		for j in new_doc:
-			keys		=	list(j.keys())
-			for k in keys:
-				if j[k] == None or type(j[k]) not in [bool,str,int]:
-					j.pop(k)
-			j['bias']	=	1.0
-				
-		X_features.append(new_doc)
-		# print(new_doc)
-		i_count	+=	1
-	print('') # TO HAVE A LINEFEED
-	"""
-	
-	
-	"""
-	for i in X_features:
-		for j in i:
-			keys	=	j.keys()
-			for k in keys:
-				if j[k] == None:
-					j.pop(k)
-	"""
 	
 	print(f'Generating new columns...')
 	
@@ -232,48 +173,9 @@ def features_and_values_for_CRF(text_base_path: str, features_memory_path: str):
 		if j == 0:
 			continue
 		prefix	=	f'{"" if j < 0 else "+"}{j}:'
-		# local_column_names	=	[]
 		for k in columns_to_consider:
 			new_column_name	=	f'{prefix}{k}'
-			# local_column_names.append(new_column_name)
 			features_df[new_column_name]	=	features_df_gb[k].shift(-j)
-		# features_df[local_column_names]	=	features_df.groupby('text_id')[local_column_names].shift(-j)
-	
-	"""
-	i_count	=	1
-	i_limit	=	len(all_text_ids)
-	for i in all_text_ids:
-		if i % 50 == 0 or i_count == i_limit:
-			print(f'Generating CRF features for text {i_count:>6} / {i_limit} : {i}', end='\r')
-		df_for_local_text	=	features_df[features_df['text_id'] == i]
-		y_values		=	df_for_local_text['y_value']
-		
-		# df_for_local_text.pop(['y_value','text_id'])
-		df_for_local_text.pop('y_value')
-		df_for_local_text.pop('text_id')
-		
-		new_doc			=	df_for_local_text.to_dict('records')
-				
-		for j in new_doc:
-			keys		=	list(j.keys())
-			for k in keys:
-				if j[k] == None or type(j[k]) not in [bool,str,int]:
-					j.pop(k)
-			# j['bias']	=	1.0
-				
-		X_features.append(new_doc)
-		# print(new_doc)
-		i_count	+=	1
-	"""
-	
-	"""
-	features_df_gb	=	features_df.groupby('text_id')
-	print(dir(features_df_gb['y_value']))
-	y_values	=	features_df_gb[['y_value']].to_dict('records')
-	features_df_gb.pop('y_value')
-	X_features	=	features_df_gb.to_dict('records')
-	print(X_features[:5])
-	"""
 	
 	features_df_gb	=	features_df.groupby('text_id')
 	i_count	=	1
@@ -318,21 +220,7 @@ def train():
 			print(f'WARNING: COULD NOT SAVE MODEL TO PATH {config["model_path"]}, SEE MESSAGE JUST ABOVE')
 		else:
 			print(f'Saved {config["model_path"]}')
-		
-		"""
-		# MOVED AFTER DEV
-		json_config_path	=	f'{config["model_path"][:-3]}_config.json'
-		try:
-			new_config_file	=	open(json_config_path,'wt',encoding='UTF-8')
-			json.dump(config, new_config_file)
-			new_config_file.close()
-		except IOError or OSError as e:
-			print(e)
-			print(f'WARNING: COULD NOT SAVE CONFIGURATION FILE TO PATH {json_config_path}, SEE MESSAGE JUST ABOVE')
-		else:
-			print(f'Saved configuration file in {json_config_path}')
-		"""
-		
+
 
 def estimate_performance_on_dev():
 	global CRF_model
@@ -342,24 +230,7 @@ def estimate_performance_on_dev():
 	X_features, y_values	=	features_and_values_for_CRF(config["text_base_dev_path"], config["features_memory_dev_path"])
 	
 	
-	
-	
 	prediction	=	CRF_model.predict(X_features)
-	
-	"""
-	y_predict	=	[]
-	for i in prediction:
-		y_predict	+=	i
-	
-	X_features['y_predict']	=	pd.Series(y_predict,dtype='category')
-	X_features[['id','text_id','offset_start','offset_end','text','y_value','y_predict']].to_csv('latest_results.csv',sep=config["sep"],encoding=config["encoding"])
-	print(f'Wrote latest_results.csv')
-	"""
-	
-	# X_text_id	=	pd.Series([])
-	# X_text		=	pd.Series([])
-	# y_value		=	pd.Series([],dtype='category')
-	# y_predict	=	pd.Series([],dtype='category')
 	
 	# X_text_id	=	[]
 	X_text_col		=	[]
@@ -378,8 +249,6 @@ def estimate_performance_on_dev():
 	
 	
 	
-	# results_df	=	pd.DataFrame([X_text_id,X_text,y_value,y_predict],names=['X_text_id','X_text','y_value','y_predict'])
-	# results_df	=	pd.DataFrame([[X_text_col,y_value_col,y_predict_col]],columns=['X_text','y_value','y_predict'])
 	results_df	=	pd.DataFrame()
 	results_df['y_value']	=	pd.Series(y_value_col,dtype='category')
 	results_df['y_predict']	=	pd.Series(y_predict_col,dtype='category')
@@ -387,14 +256,6 @@ def estimate_performance_on_dev():
 	results_df.index.name	=	'id'
 	results_df.to_csv('latest_results.csv',sep=config["sep"],encoding=config["encoding"])
 	print(f'Wrote latest_results.csv')
-	
-	overlap_top_count	=	0
-	overlap_bot_count	=	0
-	# previous_actual	=	'NONE'
-	# previous_predicted	=	'NONE'
-	# in_entity_actual	=	False
-	# in_entity_predicted	=	False
-	# overlap_triggered	=	False
 		
 	iob_counts		=	{}
 	type_counts		=	{}
@@ -405,15 +266,8 @@ def estimate_performance_on_dev():
 	bot_count	=	0
 	
 	for i in range(len(prediction)):
-		# print(i,':')
-		# print(accuracy_score(prediction[i],y_values[i]))
-		
-		
 		previous_actual		=	'NONE'
 		previous_predicted	=	'NONE'
-		# in_entity_actual	=	False
-		# in_entity_predicted	=	False
-		# overlap_triggered	=	False
 		
 		overlap_offsets_actual		=	[]
 		overlap_types_actual		=	[]
@@ -430,46 +284,15 @@ def estimate_performance_on_dev():
 					class_dict[actu_value]	=	{'TP':0,'FP':0,'FN':0}
 				if pred_value not in class_dict:
 					class_dict[pred_value]	=	{'TP':0,'FP':0,'FN':0}
-				# class_dict[actu_value]['bot_count']	+=	1
 				if pred_value == actu_value:
 					top_count	+=	1
-					"""
-					if pred_value not in class_dict:
-						class_dict[pred_value]	=	{'TP':0,'FP':0,'FN':0}
-					"""
 					class_dict[pred_value]['TP']	+=	1
 				else:
-					"""
-					if pred_value not in class_dict:
-						class_dict[pred_value]	=	{'TP':0,'FP':0,'FN':0}
-					"""
 					class_dict[pred_value]['FP']	+=	1
-					"""
-					if actu_value not in class_dict:
-						class_dict[actu_value]	=	{'TP':0,'FP':0,'FN':0}
-					"""
 					class_dict[actu_value]['FN']	+=	1
 			######################
 			
 			### RELAXED MATCH ###
-			
-			"""
-			if actu_value != previous_actual:
-				# in_entity_actual	=	(actu_value == 'NONE')
-				
-				if entity_actual == 'NONE':
-					in_entity_actual	=	False
-				else:
-					in_entity_actual	=	True
-					
-					if in_entity_predicted:
-						if actu_value == pred_value:
-							overlap_top_count	+=	1
-							# overlap_triggered	=	True
-				previous_actual	=	actu_value
-			if pred_value != previous_prediction:
-				in_entity_predicted	=	(pred_value == 'NONE')
-			"""
 			
 			if actu_value != 'NONE':
 				if actu_value != previous_actual:
@@ -490,9 +313,6 @@ def estimate_performance_on_dev():
 		###########
 		
 		### RELAXED MATCH ###
-		
-		# iob_counts	=	{}
-		# type_counts	=	{}
 		
 		# RECALL
 		
@@ -717,10 +537,6 @@ def estimate_performance_on_dev():
 	else:
 		print(f'Saved configuration file in {json_config_path}')
 	
-	
-
-# def process_dataset(dataset_type: str):
-
 # FROM OFFICIAL DOCUMENTATION
 def print_state_features(state_features):
 	for (attr, label), weight in state_features:

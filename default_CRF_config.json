@@ -80,7 +80,7 @@
 	"load_model": true,
 	"save_model": true,
 	"solver": "lbfgs",
-	"training": false,
+	"training": true,
 	"max_epoch": 200,
 	"gamma": 1.0,
 	"variance": 1.0,
