@@ -13,7 +13,7 @@ Nous avons pour objectif ici de participer aux tâches RR et L-NER de la campagn
 Pour cette tâche, nous avons testé tout d'abord des expressions régulières, ce qui a donné des résultats modérément bons, ce qui a ensuite invité l'utilisation de CRFs.
 Ces différents aspects sont détaillés ci-dessous, mais il faut avant tout préparer les données :
 - après avoir mis les fichiers de corpus dans le répertoire `data`, lancer `parser1.py` pour transformer les données dans un format CSV
-- pour séparer en TRAIN/DEV (pour l'entrainement des CRFs), lancez ensuite `corpus_splitter_v3.py`
+- pour séparer en TRAIN/DEV (pour l'entrainement des CRFs), lancez ensuite `corpus_splitter_v2.py`
 
 Si vous utilisez les CRFs, d'autres fichiers seront générés automatiquement par le script de CRF, ceux-ci devraient s'autogérer.
 
