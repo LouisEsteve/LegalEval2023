@@ -69,7 +69,7 @@ for chunk in df_train:
 		"""
 		
 		new_unit_count			=	output_obj[tag]['units_count'] + len_local_df
-		new_mean_vector			=	output_obj[tag]['mean_vector'] * (output_obj[tag]['units_count'] / new_unit_count) + mean_vector / len_local_df
+		new_mean_vector			=	output_obj[tag]['mean_vector'] * (output_obj[tag]['units_count'] / new_unit_count) + mean_vector * (len_local_df / new_unit_count)
 		output_obj[tag]['units_count']	+=	len_local_df 
 		output_obj[tag]['mean_vector']	=	new_mean_vector
 		# print(f'Added {tag}, {len(output_obj["vectors_list"])}')
