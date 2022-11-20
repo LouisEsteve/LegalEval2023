@@ -54,6 +54,7 @@ for chunk in df_train:
 		
 		sentences			=	local_df['annotation_text'].to_list()
 		
+		vectorizer.vectors		=	[]
 		vectorizer.run(sentences)
 		vectors				=	vectorizer.vectors
 		mean_vector			=	numpy.mean(vectors,axis=0)
