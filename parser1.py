@@ -2,21 +2,19 @@ import json
 from os import listdir
 from os.path import exists
 import re
+import pandas as pd
 
 data_path			=	'data'
 
 encoding			=	'UTF-8'
 
-#sentence_pattern    	 	 =   '(?s)[A-Z][^((?<![A-Z][A-Za-z]*)\\.)\\?!]*'
-#sentence_regex      	 	 =   re.compile(sentence_pattern)
-
-csv_separator       		=   '\t'
-csv_replacements    		=   [
-    ['\t', '\\t'],
-    ['\n', '\\n'],
-    ['\r', '\\r'],
-    ['"', '\\"'],
-    ["'", "\\'"]
+sep				=	'\t'
+csv_replacements		=	[
+	['\t', '\\t'],
+	['\n', '\\n'],
+	['\r', '\\r'],
+	['"', '\\"'],
+	["'", "\\'"]
 ]
 
 tab				=	'\t'
@@ -29,136 +27,130 @@ carriage_return_replacement	=	'\\r'
 text_dict			=	{}
 
 def main():
-    files = listdir(data_path)
-    for i in files:
-        #if (not i.endswith('.json')) or (not i.startswith('RR')):
-        if not i.endswith('.json'):
-            continue
-        local_path = f'{data_path}/{i}'
-        print(local_path)
-        try:
-            local_file = open(local_path, 'rt', encoding='utf-8')
-        except IOError or OSError as m:
-            print(m)
-        else:
-            sum_for_average     =   0
-            count_for_average   =   0
-            
-            json_object = json.load(local_file)
-            #print(dir(json_object))
+	files = listdir(data_path)
+	for i in files:
+		#if (not i.endswith('.json')) or (not i.startswith('RR')):
+		if not i.endswith('.json'):
+			continue
+		local_path = f'{data_path}/{i}'
+		print(local_path)
+		try:
+			local_file = open(local_path, 'rt', encoding='utf-8')
+		except IOError or OSError as m:
+			print(m)
+		else:
+			sum_for_average			=	0
+			count_for_average		=	0
+			
+			json_object			=	json.load(local_file)
+			#print(dir(json_object))
 
-            str_for_csv = csv_separator.join(
-                    [
-                        'text_id',
-                        # 'text',
-                        'text_group',
-                        'text_source',
-                        'annotation_result_group',
-                        'annotation_id',
-                        'annotation_type',
-                        'annotation_to_name',
-                        'annotation_from_name',
-                        'annotation_start',
-                        'annotation_end',
-                        'annotation_text',
-                        'annotation_label'
-                    ]
-            )
+		
+			list_text_id			=	[]
+			list_text_group			=	[]
+			list_text_source		=	[]
+			list_annotation_result_group	=	[]
+			list_annotation_id		=	[]
+			list_annotation_type		=	[]
+			list_annotation_to_name		=	[]
+			list_annotation_from_name	=	[]
+			list_annotation_start		=	[]
+			list_annotation_end		=	[]
+			list_annotation_text		=	[]
+			list_annotation_label		=	[]
 
-            j_count = 1
-            for j in json_object:
-                #local_sentences = sentence_regex.findall(j.data.text)
-                
-                print(f'Parsing text {j_count}/{len(json_object)}...', end='\r')
+			j_count = 1
+			for j in json_object:
+				#local_sentences = sentence_regex.findall(j.data.text)
 				
-                text_id                         =   j['id']             if j['id'] else hash(j['data']['text'])    			#j.id
-                
-                # if j['id'] not in text_dict:
-                if text_id not in text_dict:
-                    # text_dict[j['id']] = j['data']['text']
-                    text_dict[text_id] = j['data']['text']
-                
-                sum_for_average                 +=  len(j['data']['text'])
-                count_for_average               +=  1
-                
+				print(f'Parsing text {j_count}/{len(json_object)}...', end='\r')
+				
+				text_id			=	j['id']			if j['id'] else hash(j['data']['text'])				#j.id
+				
+				# if j['id'] not in text_dict:
+				if text_id not in text_dict:
+					# text_dict[j['id']] = j['data']['text']
+					text_dict[text_id]	=	j['data']['text']
+				
+				sum_for_average		+=	len(j['data']['text'])
+				count_for_average	+=	1
+				
+				text_group		=	j['meta']['group']	if 'group' in j['meta'].keys() else '_'			 #j.meta.group
+				text_source		=	j['meta']['source']	if 'source' in j['meta'].keys() else '_'			#j.meta.group
 
-                # text_id                         =   j['id']             if len(j['id']) > 0 else hash(j['data']['text'])    #j.id
-                # text                          =   j['data']['text']                                                       #j.data.text
-                text_group                      =   j['meta']['group']  if 'group' in j['meta'].keys() else '_'             #j.meta.group
-                text_source                     =   j['meta']['source'] if 'source' in j['meta'].keys() else '_'            #j.meta.group
+				for q in range(len(j['annotations'])):
+					annotation_result_group	 =	q
+					
+					#for k in j['annotations'][0]['result']:
+					for k in j['annotations'][q]['result']:
+						annotation_id		=	k['id']																 #k.id
+						annotation_type		=	k['type']		if 'type' in k.keys() else '_'					  #k.type
+						annotation_to_name	=	k['to_name']		if 'to_name' in k.keys() else '_'					#k.to_name
+						annotation_from_name	=	k['from_name']		if 'from_name' in k.keys() else '_'				 #k.from_name
+						annotation_start	=	k['value']['start']													 #k.value.start
+						annotation_end		=	k['value']['end']														#k.value.end
+						annotation_text		=	k['value']['text']													  #k.value.text
 
-                for q in range(len(j['annotations'])):
-                    annotation_result_group     =    q
-                    
-                    #for k in j['annotations'][0]['result']:
-                    for k in j['annotations'][q]['result']:
-                        annotation_id           =   k['id']                                                                 #k.id
-                        annotation_type         =   k['type']           if 'type' in k.keys() else '_'                      #k.type
-                        annotation_to_name      =   k['to_name']        if 'to_name' in k.keys() else '_'                   #k.to_name
-                        annotation_from_name    =   k['from_name']      if 'from_name' in k.keys() else '_'                 #k.from_name
-                        annotation_start        =   k['value']['start']                                                     #k.value.start
-                        annotation_end          =   k['value']['end']                                                       #k.value.end
-                        annotation_text         =   k['value']['text']                                                      #k.value.text
-
-                        for m in k['value']['labels']:
-                            annotation_label    =   m
-                            
-                            cell_values         =   [
-                                str(text_id),
-                                # str(text),
-                                str(text_group),
-                                str(text_source),
-                                str(annotation_result_group),
-                                str(annotation_id),
-                                str(annotation_type),
-                                str(annotation_to_name),
-                                str(annotation_from_name),
-                                str(annotation_start),
-                                str(annotation_end),
-                                str(annotation_text),
-                                str(annotation_label)
-                            ]
-                            
-                            
-                            #for n in cell_values:
-                            #    for p in csv_replacements:
-                            #        n           =   n.replace(p[0], p[1])
-
-                            for n in range(len(cell_values)):
-                                for p in csv_replacements:
-                                    cell_values[n]  =   cell_values[n].replace(p[0], p[1])
-
-                            local_line_for_csv  =   csv_separator.join(cell_values)
-
-                            str_for_csv         =   f'{str_for_csv}\n{local_line_for_csv}'
-                j_count += 1
-            local_file.close()
-            print('')
-            
-            output_count = 0
-            output_path = f'{local_path[:-5]}_restructured{str(output_count)}.csv'
-            while(exists(output_path)):
-                output_count += 1
-                output_path = f'{local_path[:-5]}_restructured{str(output_count)}.csv'
-            f = open(output_path, 'wt', encoding='utf-8')
-            f.write(str_for_csv)
-            f.close()
-            print(f'Wrote {output_path} (character count: {len(str_for_csv)})')
-            print(f'Average length: {sum_for_average/count_for_average}\n{"-"*32}')
-            #break
-    text_base_path  =   f'{data_path}/text_base.csv'
-    f               =   open(text_base_path,'wt',encoding=encoding)
-    # s               =   '\n'.join(['\t'.join([i,text_dict[i].replace('\t','\\t').replace('\n','\\n') for i in text_dict])])
-    # s               =   'id\ttext\n' + '\n'.join([f"{i}\t{text_dict[i].replace(tab,tab_replacement).replace(linefeed,linefeed_replacement).replace(carriage_return,carriage_return_replacement)}" for i in text_dict])
-    for i in text_dict:
-        for j in csv_replacements:
-            text_dict[i]	=	text_dict[i].replace(j[0],j[1])
-    s               =   'id\ttext\n' + '\n'.join([f"{i}\t{text_dict[i]}" for i in text_dict])
-    f.write(s)
-    print(f'Wrote {text_base_path}')
-    f.close()
+						for m in k['value']['labels']:
+							annotation_label	=	m
+							
+							list_text_id.append(text_id)
+							list_text_group.append(text_group)
+							list_text_source.append(text_source)
+							list_annotation_result_group.append(annotation_result_group)
+							list_annotation_id.append(annotation_id)
+							list_annotation_type.append(annotation_type)
+							list_annotation_to_name.append(annotation_to_name)
+							list_annotation_from_name.append(annotation_from_name)
+							list_annotation_start.append(annotation_start)
+							list_annotation_end.append(annotation_end)
+							list_annotation_text.append(annotation_text)
+							list_annotation_label.append(annotation_label)
+				
+				
+				j_count += 1
+			local_file.close()
+			print('')
+			
+			output_count = 0
+			output_path = f'{local_path[:-5]}_restructured{str(output_count)}.csv'
+			while(exists(output_path)):
+				output_count += 1
+				output_path = f'{local_path[:-5]}_restructured{str(output_count)}.csv'
+			
+			df				=	pd.DataFrame()
+			
+			df.index.name			=	'id'
+			df['text_id']			=	pd.Series(list_text_id)
+			df['text_group']		=	pd.Series(list_text_group)
+			df['text_source']		=	pd.Series(list_text_source)
+			df['annotation_result_group']	=	pd.Series(list_annotation_result_group)
+			df['annotation_id']		=	pd.Series(list_annotation_id)
+			df['annotation_type']		=	pd.Series(list_text_id)
+			df['annotation_to_name']	=	pd.Series(list_annotation_type)
+			df['annotation_from_name']	=	pd.Series(list_annotation_from_name)
+			df['annotation_start']		=	pd.Series(list_annotation_start)
+			df['annotation_end']		=	pd.Series(list_annotation_end)
+			df['annotation_text']		=	pd.Series(list_annotation_text)
+			df['annotation_label']		=	pd.Series(list_annotation_label)
+			
+			
+			df.to_csv(output_path,sep=sep,encoding='UTF-8')
+			
+			print(f'Wrote {output_path}')
+	text_base_path  =	f'{data_path}/text_base.csv'
+	
+	list_ids	=	[i for i in text_dict]
+	list_texts	=	[text_dict[i] for i in text_dict]
+	
+	text_df		=	pd.DataFrame()
+	text_df['id']	=	pd.Series(list_ids)
+	text_df['text']	=	pd.Series(list_texts)
+	
+	text_df.to_csv(text_base_path,sep=sep,encoding=encoding,index=False)
+	print(f'Wrote {text_base_path}')
 
 
 if __name__ == '__main__':
-    main()
+	main()
 
