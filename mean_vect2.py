@@ -60,10 +60,17 @@ for chunk in df_train:
 		# output_obj['vectors_list'].append({'tag':tag,'vector_size':BERT_MODEL_SIZE,'units_count':len(vectors),'mean_vector':mean_vector.tolist()})
 		if tag not in output_obj:
 			output_obj[tag]	=	{'vector_size':BERT_MODEL_SIZE,'units_count':0,'mean_vector':numpy.zeros(BERT_MODEL_SIZE)}
+		"""
 		previous_sum			=	output_obj[tag]['mean_vector'] * output_obj[tag]['units_count']
 		sum				=	previous_sum + mean_vector * len_local_df
 		output_obj[tag]['units_count']	+=	len_local_df 
 		new_mean_vector			=	sum / len_local_df
+		output_obj[tag]['mean_vector']	=	new_mean_vector
+		"""
+		
+		new_unit_count			=	output_obj[tag]['units_count'] + len_local_df
+		new_mean_vector			=	output_obj[tag]['mean_vector'] * (output_obj[tag]['units_count'] / new_unit_count) + mean_vector / len_local_df
+		output_obj[tag]['units_count']	+=	len_local_df 
 		output_obj[tag]['mean_vector']	=	new_mean_vector
 		# print(f'Added {tag}, {len(output_obj["vectors_list"])}')
 	i_count	+=	1
