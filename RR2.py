@@ -27,9 +27,15 @@ for i in vector_means:
 df_test		=	pd.read_csv(dev_path,sep='\t',chunksize=chunksize)
 predictions	=	[]
 
+y_values	=	[]
+
 i_count	=	1
 for chunk in df_test:
-	print(f'chunk {i_count}',end='\r')
+	print(f'chunk {i_count}'
+		,end='\r'
+	)
+	vectorizer.vectors	=	[]
+	y_values		+=	chunk['annotation_label'].tolist()
 	vectorizer.run(chunk['annotation_text'].tolist())
 	for i in vectorizer.vectors:
 		min_distance	=	None
@@ -45,5 +51,6 @@ for chunk in df_test:
 		print(f'Reached chunk_count_limit ({chunk_count_limit})')
 		break
 
-print(predictions)
+print(len(predictions),len(y_values))
+print(len([1 for i in range(len(predictions)) if predictions[i] == y_values[i]]) / len(predictions))
 
