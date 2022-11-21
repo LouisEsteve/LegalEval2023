@@ -22,7 +22,11 @@ vector_means			=	json.load(json_file)
 json_file.close()
 
 for i in vector_means:
+	# vector_means[i]['mean_vector']	=	numpy.array(vector_means[i]['mean_vector'])
+	# vector_means[i]['mean_vector']	=	numpy.exp(vector_means[i]['mean_vector'])
 	vector_means[i]['mean_vector']	=	numpy.array(vector_means[i]['mean_vector'])
+	vector_means[i]['mean_vector']	=	numpy.exp(vector_means[i]['mean_vector'])
+	vector_means[i]['mean_vector']	-=	vector_means[i]['positive_sizing']
 
 df_test		=	pd.read_csv(dev_path,sep='\t',chunksize=chunksize)
 predictions	=	[]

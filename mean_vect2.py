@@ -17,7 +17,7 @@ chunksize			=	15
 df_train			=	pd.read_csv('RR_TRAIN.csv',sep='\t',chunksize=chunksize)
 # df_train['annotation_text']	=	df_train['annotation_text'].str.strip(' \t\n')
 
-chunk_count_limit		=	25
+chunk_count_limit		=	5
 
 
 # RR = ['PREAMBLE','FAC','RLC','ISSUE','ARG_PETITIONER','ARG_RESPONDENT','ANALYSIS','STA','PRE_RELIED','PRE_NOT_RELIED','RATIO','RPC','NONE']
@@ -29,6 +29,8 @@ split_pattern_2 	= '(?<=[ˆA-Z]{2}[\.\?!])\s+(?=[A-Z])'
 
 regex_splitter		=	re.compile(split_pattern_2)
 """
+
+positive_sizing		=	100
 
 
 BERT_MODEL_SIZE		=	768
@@ -56,11 +58,18 @@ for chunk in df_train:
 		
 		vectorizer.vectors		=	[]
 		vectorizer.run(sentences)
+		# print(vectorizer.vectors[0])
+		# exit()
+		"""
 		vectors				=	vectorizer.vectors
 		mean_vector			=	numpy.mean(vectors,axis=0)
+		"""
+		mean_vector			=	numpy.mean(vectorizer.vectors,axis=0)
+		mean_vector			+=	positive_sizing
+		mean_vector			=	numpy.log(mean_vector)
 		# output_obj['vectors_list'].append({'tag':tag,'vector_size':BERT_MODEL_SIZE,'units_count':len(vectors),'mean_vector':mean_vector.tolist()})
 		if tag not in output_obj:
-			output_obj[tag]	=	{'vector_size':BERT_MODEL_SIZE,'units_count':0,'mean_vector':numpy.zeros(BERT_MODEL_SIZE)}
+			output_obj[tag]	=	{'vector_size':BERT_MODEL_SIZE,'storage':'log_e','positive_sizing':positive_sizing,'units_count':0,'mean_vector':numpy.zeros(BERT_MODEL_SIZE)}
 		"""
 		previous_sum			=	output_obj[tag]['mean_vector'] * output_obj[tag]['units_count']
 		sum				=	previous_sum + mean_vector * len_local_df
