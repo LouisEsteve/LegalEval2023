@@ -39,6 +39,8 @@ f_out_path		=	'RR_mean_vectors768.json'
 # output_obj	=	{'vectors_list':[]}
 output_obj	=	{}
 
+NaN_error_count	=	0
+
 # CALCUL MOYENNE / CLASSE
 
 i_count	=	1
@@ -80,8 +82,11 @@ for chunk in df_train:
 		
 		new_unit_count			=	output_obj[tag]['units_count'] + len_local_df
 		new_mean_vector			=	output_obj[tag]['mean_vector'] * (output_obj[tag]['units_count'] / new_unit_count) + mean_vector * (len_local_df / new_unit_count)
-		output_obj[tag]['units_count']	+=	len_local_df 
-		output_obj[tag]['mean_vector']	=	new_mean_vector
+		if True not in numpy.isnan(new_mean_vector):
+			output_obj[tag]['units_count']	+=	len_local_df 
+			output_obj[tag]['mean_vector']	=	new_mean_vector
+		else:
+			NaN_error_count			+=	1
 		# print(f'Added {tag}, {len(output_obj["vectors_list"])}')
 	i_count	+=	1
 	if chunk_count_limit != None and i_count >= chunk_count_limit:
@@ -97,3 +102,5 @@ json.dump(output_obj,f_out,indent=8)
 f_out.close()
 
 print(f'Wrote {f_out_path}')
+
+print(f'NaN_error_count: {NaN_error_count}')
