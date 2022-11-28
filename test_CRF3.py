@@ -9,11 +9,16 @@ import pandas as pd
 import joblib
 import json
 import sklearn_crfsuite
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, cohen_kappa_score
+# import seqeval
+# from seqeval.metrics import classification_report as seqeval_classification_report
+from seqeval.metrics.sequence_labeling import classification_report as seqeval_classification_report
+from seqeval.scheme import IOB2, IOBES
 
 ########################################
 
-config_path		=	'default_CRF_config.json'
+# config_path		=	'default_CRF_config2.json'
+config_path		=	'CRF_MULTI64_CRF3_config.json'
 
 # https://readthedocs.org/projects/sklearn-crfsuite/downloads/pdf/latest/
 
@@ -36,8 +41,63 @@ anti_whitespace_regex		=	re.compile('\\S')
 CRF_model			=	None
 annot_df			=	None
 
+previous_class			=	'NONE'
+def reset_IOB_mapper() -> None:
+	global previous_class
+	previous_class		=	'NONE'
+
+def IOB_mapper(x: str) -> str:
+	global previous_class
+	if x == 'NONE':
+		result		=	'O'
+	else:
+		if x != previous_class:
+			result	=	f'B-{x}'
+		else:
+			result	=	f'I-{x}'
+	previous_class	=	x
+	return result
+
+def IOBES_transformer(x: list) -> list:
+	global_output	=	[]
+	for i in x:
+		local_output	=	[]
+		previous_class	=	None
+		for j in i:
+			prefix	=	''
+			# suffix	=	''
+			if j != previous_class:
+				if len(local_output) > 0:
+					if local_output[-1][0] == 'B':
+						# local_output[-1][0] = 'S'
+						local_output[-1]	=	f'S{local_output[-1][1:]}'
+					elif local_output[-1][0] == 'I':
+						# local_output[-1][0] = 'E'
+						local_output[-1]	=	f'E{local_output[-1][1:]}'
+				"""
+				if j == 'NONE':
+					prefix	=	'O'
+				else:
+					prefix	=	'B-'
+				"""
+				
+				if j != 'NONE':
+					prefix	=	'B-'
+			else:
+				prefix	=	'I-'
+			# local_output.append(f'{prefix}{suffix}')
+			# local_output.append(f'{prefix}{j}')
+			if j == 'NONE':
+				local_output.append('O')
+			else:
+				local_output.append(f'{prefix}{j}')
+			previous_class	=	j
+		global_output.append(local_output)
+	return global_output
+
 def prepare_model():
 	global CRF_model
+	
 	if CRF_model == None and config["load_model"] and exists(config["model_path"]):
 		try:
 			CRF_model	=	joblib.load(config["model_path"])
@@ -47,21 +107,51 @@ def prepare_model():
 			return 1
 	else:
 		CRF_model	=	sklearn_crfsuite.CRF(
+			# model_filename			=	config["model_path"],
 			algorithm			=	config["solver"],
 			c1				=	None if config["solver"].lower()!='lbfgs' else config["c1"],
 			c2				=	None if config["solver"].lower() not in ['lbfgs','l2sgd'] else config["c2"],
+			pa_type				=	None if config["solver"].lower()!='pa' or "pa_type" not in config else config["pa_type"],
 			max_iterations			=	config["max_epoch"],
 			gamma				=	None if config["solver"].lower()!='arow' else config["gamma"],
 			all_possible_transitions	=	config["all_possible_transitions"],
 			all_possible_states		=	config["all_possible_states"],
 			variance			=	None if config["solver"].lower()!='arow' else config["variance"],
 			epsilon				=	None if config["solver"].lower()=='l2sgd' else config["epsilon"],
+			period				=	None if config["solver"].lower() not in ['l2sgd','lbfgs'] or "period" not in config else config["period"],
 			verbose				=	True,
-			min_freq			=	0.0 if "min_freq" not in config else config["min_freq"]
+			min_freq			=	0.0 if "min_freq" not in config else config["min_freq"],
+			# calibration_eta			=	config["calibration_eta"] if "calibration_eta" in config else 0.1,
+			# calibration_rate		=	config["calibration_rate"] if "calibration_rate" in config else 2.0,
+			# calibration_samples		=	config["calibration_samples"] if "calibration_samples" in config else 1000,
+			# calibration_candidates		=	config["calibration_candidates"] if "calibration_candidates" in config else 10,
+			# calibration_max_trials		=	config["calibration_max_trials"] if "calibration_max_trials" in config else 20
 		)
+	"""
+	CRF_model	=	sklearn_crfsuite.CRF(
+		model_filename			=	config["model_path"],
+		algorithm			=	config["solver"],
+		c1				=	None if config["solver"].lower()!='lbfgs' else config["c1"],
+		c2				=	None if config["solver"].lower() not in ['lbfgs','l2sgd'] else config["c2"],
+		max_iterations			=	config["max_epoch"],
+		gamma				=	None if config["solver"].lower()!='arow' else config["gamma"],
+		all_possible_transitions	=	config["all_possible_transitions"],
+		all_possible_states		=	config["all_possible_states"],
+		variance			=	None if config["solver"].lower()!='arow' else config["variance"],
+		epsilon				=	None if config["solver"].lower()=='l2sgd' else config["epsilon"],
+		verbose				=	True,
+		min_freq			=	0.0 if "min_freq" not in config else config["min_freq"],
+		# calibration_eta			=	config["calibration_eta"] if "calibration_eta" in config else 0.1,
+		# calibration_rate		=	config["calibration_rate"] if "calibration_rate" in config else 2.0,
+		# calibration_samples		=	config["calibration_samples"] if "calibration_samples" in config else 1000,
+		# calibration_candidates		=	config["calibration_candidates"] if "calibration_candidates" in config else 10,
+		# calibration_max_trials		=	config["calibration_max_trials"] if "calibration_max_trials" in config else 20
+	)
+	print(f'Model with path {config["model_path"]}')
+	"""
 	return 0
 
-def generate_features(text_base_path: str, features_memory_path: str):
+def generate_features(text_base_path: str, features_memory_path: str, annot_preamble_path: str, annot_judgement_path: str):
 	preamble_df	=	pd.read_csv(annot_preamble_path, encoding=config["encoding"], sep=config["sep"])
 	preamble_df.dropna(how='all',inplace=True)
 	judgement_df	=	pd.read_csv(annot_judgement_path, encoding=config["encoding"], sep=config["sep"])
@@ -88,12 +178,17 @@ def generate_features(text_base_path: str, features_memory_path: str):
 	text_base_df['text']	=	text_base_df['text'].str.replace('\\"','"',regex=False)
 	text_base_df['text']	=	text_base_df['text'].str.replace("\\'","'",regex=False)
 	
+	text_base_df.sort_values(['id'],kind='mergesort',inplace=True)
+	
 	
 	if 'spacy' not in dir():
 		import spacy
 	nlp		=	spacy.load(config["spacy_model"])
+	print(f'Loaded {config["spacy_model"]}')
 	
+	id_list	=	text_base_df['id'].to_list()
 	
+	"""
 	i_count	=	1
 	i_limit	=	len(text_base_df)
 	for i in text_base_df['id']:
@@ -125,6 +220,55 @@ def generate_features(text_base_path: str, features_memory_path: str):
 				y_values.append('NONE')
 		i_count	+=	1
 	print('') # TO HAVE A LINEFEED
+	"""
+	
+	
+	
+	
+	
+	
+	i_count	=	1
+	i_limit	=	len(text_base_df)
+	"""
+	for i in text_base_df['id']:
+		print(f'Generating features for text {i_count:>6} / {i_limit} : {i}',end='\r')
+		doc		=	nlp(text_base_df.loc[(text_base_df['id'] == i)]['text'].to_list()[0])
+	"""
+	for doc in nlp.pipe(text_base_df['text'].to_list(),n_process=2):
+		i	=	all_ids[i_count-1]
+		# REWORK HERE
+		for j in doc:
+			if anti_whitespace_regex.search(j.text) == None:
+				continue
+			features	=	{
+				'text_id'	:	i,
+				'id_in_text'	:	j.i#,
+				# 'type'		:	dataset_type
+			}
+			for k in config["relevant_features"]:
+				attr			=	getattr(j,k)
+				attr			=	attr if '__call__' not in dir(attr) else attr()
+				# features[k]		=	attr
+				features[k.lstrip('_')]	=	attr
+			X_features.append(features)
+			
+			tok_start		=	j.idx
+			tok_end			=	j.idx + len(j)
+			features['offset_start']	=	tok_start
+			features['offset_end']		=	tok_end
+			relevant_annotations	=	annot_df.loc[(annot_df['text_id'] == i) & (annot_df['annotation_start'] <= tok_start) & (annot_df['annotation_end'] >= tok_end)]
+			if len(relevant_annotations) > 0:
+				y_values.append(relevant_annotations['annotation_label'].to_list()[0])
+			else:
+				y_values.append('NONE')
+		i_count	+=	1
+	print('') # TO HAVE A LINEFEED
+	
+	
+	
+	
+	
+	
 	
 	
 	
@@ -137,16 +281,23 @@ def generate_features(text_base_path: str, features_memory_path: str):
 	print(f'Saved {features_memory_path}')
 	return memory_df
 
-def features_and_values_for_CRF(text_base_path: str, features_memory_path: str):
+def features_and_values_for_CRF(text_base_path: str, features_memory_path: str, annot_preamble_path: str, annot_judgement_path: str):
 	X_features	=	[]
 	y_values	=	[]
+	meta_info	=	[]
 	
 	if not exists(features_memory_path):
 		print('Features were not found, generating them...')
-		features_df	=	generate_features(text_base_path, features_memory_path)
+		features_df	=	generate_features(text_base_path, features_memory_path, annot_preamble_path, annot_judgement_path)
+		features_df.sort_values(['text_id','id_in_text'],kind='mergesort',inplace=True)
+		meta_info	=	features_df[['text_id','id_in_text','offset_start','offset_end']].to_dict('records')
 		features_df	=	features_df[[i.lstrip('_') for i in config["relevant_features"] if i not in config["irrelevant_features"]] + ['y_value','text_id']]
 	else:
-		features_df	=	pd.read_csv(features_memory_path,encoding=config["encoding"],sep=config["sep"], index_col='id', na_values='N/A',dtype=config["dtype"])[[i.lstrip('_') for i in config["relevant_features"] if i not in config["irrelevant_features"]] + ['y_value','text_id']].copy() #FIXED #IMPROVED
+		# features_df	=	pd.read_csv(features_memory_path,encoding=config["encoding"],sep=config["sep"], index_col='id', na_values='N/A',dtype=config["dtype"])[[i.lstrip('_') for i in config["relevant_features"] if i not in config["irrelevant_features"]] + ['y_value','text_id']].copy() #FIXED #IMPROVED
+		features_df	=	pd.read_csv(features_memory_path,encoding=config["encoding"],sep=config["sep"], index_col='id', na_values='N/A',dtype=config["dtype"]) #FIXED #IMPROVED
+		features_df.sort_values(['text_id','id_in_text'],kind='mergesort',inplace=True)
+		meta_info	=	features_df[['text_id','id_in_text','offset_start','offset_end']].to_dict('records')
+		features_df	=	features_df[[i.lstrip('_') for i in config["relevant_features"] if i not in config["irrelevant_features"]] + ['y_value','text_id']]
 		print(f'Loaded features from {features_memory_path}')
 	
 	features_df.dropna(how='all',inplace=True)
@@ -154,7 +305,7 @@ def features_and_values_for_CRF(text_base_path: str, features_memory_path: str):
 	for i in config["labels_to_erase"]:
 		features_df['y_value']	=	features_df['y_value'].str.replace(i,'NONE',regex=False)
 	
-	print(features_df.columns)
+	# print(features_df.columns)
 	
 	
 	
@@ -165,7 +316,7 @@ def features_and_values_for_CRF(text_base_path: str, features_memory_path: str):
 	columns_to_consider	=	[i for i in features_df.columns if i not in ['y_value','text_id','offset_start','offset_end']]
 	
 	
-	print(f'Generating new columns...')
+	# print(f'Generating new columns...')
 	
 	features_df_gb	=	features_df.groupby('text_id')
 	
@@ -181,15 +332,28 @@ def features_and_values_for_CRF(text_base_path: str, features_memory_path: str):
 	i_count	=	1
 	i_limit	=	len(all_text_ids)
 	for name, group in features_df_gb:
-		# if i_count % 
-		print(f'y_values : {i_count:<6} / {i_limit}',end='\r')
+		# if i_count % 100 == 0 or i_count == i_limit:
+		print(f'y_values : {i_count:>6} / {i_limit}',end='\r')
 		y_values.append(group['y_value'].to_list())
 		i_count	+=	1
+	
+	if "early_IOB_mapping" in config and config["early_IOB_mapping"]:
+		if "IOBES" in config and config["IOBES"]:
+			y_values	=	IOBES_transformer(y_values)
+		else:
+			for i in range(len(y_values)):
+				reset_IOB_mapper()
+				for j in range(len(y_values[i])):
+					y_values[i][j]	=	IOB_mapper(y_values[i][j])
+	
+	# print(y_values[2])
+	
 	features_df.pop('y_value')
 	features_df.pop('text_id')
 	i_count	=	1
 	for name, group in features_df_gb:
-		print(f'X_features : {i_count:<6} / {i_limit}',end='\r')
+		# if i_count % 100 == 0 or i_count == i_limit:
+		print(f'X_features : {i_count:>6} / {i_limit}',end='\r')
 		X_features.append(group.to_dict('records'))
 		i_count	+=	1
 	
@@ -200,18 +364,27 @@ def features_and_values_for_CRF(text_base_path: str, features_memory_path: str):
 				if j[k] == None or type(j[k]) not in [bool,int,str]:
 					j.pop(k)
 	del(features_df)
-	return X_features, y_values
+	return X_features, y_values, meta_info
 	
 def train():
 	global CRF_model
 	if CRF_model == None:
 		prepare_model()
-	X_features, y_values	=	features_and_values_for_CRF(config["text_base_train_path"], config["features_memory_train_path"])
+	# X_features, y_values	=	features_and_values_for_CRF(config["text_base_train_path"], config["features_memory_train_path"])
+	# X_features, y_values	=	features_and_values_for_CRF(config["text_base_train_path"], config["features_memory_train_path"], config["annot_preamble_train_path"] if "annot_preamble_train_path" in config else 'NONE', config["annot_judgement_train_path"] if "annot_judgement_train_path" in config else 'NONE')
+	X_features, y_values, meta_info	=	features_and_values_for_CRF(config["text_base_train_path"], config["features_memory_train_path"], config["annot_preamble_train_path"] if "annot_preamble_train_path" in config else 'NONE', config["annot_judgement_train_path"] if "annot_judgement_train_path" in config else 'NONE')
+	
+	del(meta_info)
 	
 	# print(X_features[:2],y_values[:2])
 	# print(y_values[:15])
 	
+	# try:
 	CRF_model.fit(X_features,y_values)
+	# except KeyboardInterrupt:
+		# print(f'User cancelled training')
+	
+	
 	if config["save_model"]:
 		try:
 			joblib.dump(CRF_model, config["model_path"])
@@ -220,6 +393,7 @@ def train():
 			print(f'WARNING: COULD NOT SAVE MODEL TO PATH {config["model_path"]}, SEE MESSAGE JUST ABOVE')
 		else:
 			print(f'Saved {config["model_path"]}')
+	
 
 
 def estimate_performance_on_dev():
@@ -227,10 +401,51 @@ def estimate_performance_on_dev():
 	if CRF_model == None:
 		print('No CRF_model available, cannot estimate performance on DEV')
 		exit()
-	X_features, y_values	=	features_and_values_for_CRF(config["text_base_dev_path"], config["features_memory_dev_path"])
+	# X_features, y_values	=	features_and_values_for_CRF(config["text_base_dev_path"], config["features_memory_dev_path"])
+	# X_features, y_values	=	features_and_values_for_CRF(config["text_base_dev_path"], config["features_memory_dev_path"], config["annot_preamble_dev_path"] if "annot_preamble_dev_path" in config else 'NONE', config["annot_judgement_dev_path"] if "annot_judgement_dev_path" in config else 'NONE')
+	X_features, y_values, meta_info	=	features_and_values_for_CRF(config["text_base_dev_path"], config["features_memory_dev_path"], config["annot_preamble_dev_path"] if "annot_preamble_dev_path" in config else 'NONE', config["annot_judgement_dev_path"] if "annot_judgement_dev_path" in config else 'NONE')
+	
 	
 	
 	prediction	=	CRF_model.predict(X_features)
+	
+	if "early_IOB_mapping" in config:
+		if not config["early_IOB_mapping"]:
+			if "IOBES" in config and config["IOBES"]:
+				IOBES_y_values		=	IOBES_transformer(y_values)
+				IOBES_prediction	=	IOBES_transformer(prediction)
+				print(seqeval_classification_report(IOBES_y_values,IOBES_prediction,scheme=IOBES,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
+			else:
+				IOB_y_values	=	[]
+				IOB_prediction	=	[]
+				for i in range(len(y_values)):
+					reset_IOB_mapper()
+					local_y_values		=	[]
+					for j in range(len(y_values[i])):
+						local_y_values.append(IOB_mapper(y_values[i][j]))
+					IOB_y_values.append(local_y_values)
+					
+					reset_IOB_mapper()
+					local_prediction	=	[]
+					for j in range(len(y_values[i])):
+						local_prediction.append(IOB_mapper(prediction[i][j]))
+					IOB_prediction.append(local_prediction)
+				# print(seqeval.metrics.classification_report(IOB_y_values,IOB_prediction))
+				print(seqeval_classification_report(IOB_y_values,IOB_prediction,scheme=IOB2,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
+		else:
+			if "IOBES" in config and config["IOBES"]:
+				print(seqeval_classification_report(y_values,prediction,scheme=IOBES,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
+			else:
+				print(seqeval_classification_report(y_values,prediction,scheme=IOB2,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
+	
+		
+	
+	flat_prediction	=	[]
+	flat_y_values	=	[]
+	for i in range(len(prediction)):
+		flat_prediction	+=	prediction[i]
+		flat_y_values	+=	y_values[i]
+	cohen_score	=	cohen_kappa_score(flat_prediction,flat_y_values)
 	
 	# X_text_id	=	[]
 	X_text_col		=	[]
@@ -249,14 +464,19 @@ def estimate_performance_on_dev():
 	
 	
 	
-	results_df	=	pd.DataFrame()
-	results_df['y_value']	=	pd.Series(y_value_col,dtype='category')
-	results_df['y_predict']	=	pd.Series(y_predict_col,dtype='category')
-	results_df['X_text']	=	pd.Series(X_text_col,dtype='str')
-	results_df.index.name	=	'id'
+	results_df			=	pd.DataFrame()
+	results_df['text_id']		=	pd.Series([i['text_id'] for i in meta_info],dtype='string')
+	results_df['id_in_text']	=	pd.Series([i['id_in_text'] for i in meta_info],dtype='Int32')
+	results_df['offset_start']	=	pd.Series([i['offset_start'] for i in meta_info],dtype='Int32')
+	results_df['offset_end']	=	pd.Series([i['offset_end'] for i in meta_info],dtype='Int32')
+	results_df['y_value']		=	pd.Series(y_value_col,dtype='category')
+	results_df['y_predict']		=	pd.Series(y_predict_col,dtype='category')
+	results_df['X_text']		=	pd.Series(X_text_col,dtype='string')
+	results_df.index.name		=	'id'
 	results_df.to_csv('latest_results.csv',sep=config["sep"],encoding=config["encoding"])
 	print(f'Wrote latest_results.csv')
-		
+	
+	"""
 	iob_counts		=	{}
 	type_counts		=	{}
 	
@@ -476,6 +696,7 @@ def estimate_performance_on_dev():
 	
 	
 	
+	
 	iob_macro_p		=	sum(iob_all_p)/len(iob_all_p) if len(iob_all_p) > 0 else 'N/A'
 	iob_macro_r		=	sum(iob_all_r)/len(iob_all_r) if len(iob_all_r) > 0 else 'N/A'
 	iob_macro_f1	=	(2*iob_macro_p*iob_macro_r)/(iob_macro_p+iob_macro_r) if (iob_macro_p != 'N/A' and iob_macro_r != 'N/A') else 'N/A'
@@ -503,6 +724,8 @@ def estimate_performance_on_dev():
 	print(f'{"MICRO-RECALL":<16} | {micro_r:<24} | {iob_micro_r:<24} | {type_micro_r:<24}')
 	print(f'{"MICRO-F1":<16} | {micro_f1:<24} | {iob_micro_f1:<24} | {type_micro_f1:<24}')
 	
+	print(f'{"COHEN KAPPA":<16} | {cohen_score:<24} | {"":<24} | {"":<24}')
+	
 	print('-'*97)
 	
 	config['stats']	=	{
@@ -525,6 +748,7 @@ def estimate_performance_on_dev():
 		'type_micro_r'	:	type_micro_r,
 		'type_micro_f1'	:	type_micro_f1
 	}
+	"""
 	
 	json_config_path	=	f'{config["model_path"][:-3]}_config.json'
 	try:
