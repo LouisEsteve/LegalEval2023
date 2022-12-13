@@ -17,8 +17,13 @@ from seqeval.scheme import IOB2, IOBES
 
 ########################################
 
-# config_path		=	'default_CRF_config2.json'
-config_path		=	'CRF_MULTI64_CRF3_config.json'
+config_path		=	'default_CRF_config2.json'
+# config_path		=	'CRF_MULTI64_CRF3_config.json'
+# config_path		=	'CRF_MULTI63_CRF3_config.json'
+# config_path		=	'CRF_MULTI70_CRF3_config.json'
+# config_path		=	'CRF_MULTI74_CRF3_config.json'
+# config_path		=	'CRF_MULTI80_CRF3_config.json'
+# config_path		=	'CRF_MULTI87_CRF3_config.json'
 
 # https://readthedocs.org/projects/sklearn-crfsuite/downloads/pdf/latest/
 
@@ -37,6 +42,9 @@ print(f'Loaded configuration from file {config_path}')
 ########################################
 
 anti_whitespace_regex		=	re.compile('\\S')
+
+date_regex			=	re.compile('((0?\\d|[12]\\d|3[01])(?P<SEP1>\\D)(0?\\d|1[012])(?P=SEP1)(18|19|20)\\d{2})|((0?\\d|1[012])(?P<SEP2>\\D)(0?\\d|[12]\\d|3[01])(?P=SEP2)(18|19|20)\\d{2})|((18|19|20)\\d{2}(?P<SEP3>\\D)(0?\\d|[12]\\d|3[01])(?P=SEP3)(0?\\d|1[012]))|((18|19|20)\\d{2})(?P<SEP4>\\D)(0?\\d|1[012])(?P=SEP4)(0?\\d|[12]\\d|3[01])')
+org_regex			=	re.compile('[A-Z]{3,}')
 
 CRF_model			=	None
 annot_df			=	None
@@ -57,6 +65,16 @@ def IOB_mapper(x: str) -> str:
 			result	=	f'I-{x}'
 	previous_class	=	x
 	return result
+
+def IOB_correcter(x):
+	for i in range(len(x)):
+		previous_IOB	=	'O'
+		for j in range(len(x[i])):
+			if x[i][j][0] == 'I':
+				if previous_IOB not in ['B','I']:
+					x[i][j]	=	f'B{x[i][j][1:]}'
+			previous_IOB	=	x[i][j][0]
+	return x
 
 def IOBES_transformer(x: list) -> list:
 	global_output	=	[]
@@ -92,6 +110,16 @@ def IOBES_transformer(x: list) -> list:
 			else:
 				local_output.append(f'{prefix}{j}')
 			previous_class	=	j
+		#####
+		# END OF DOCUMENT FIX
+		if len(local_output) > 0:
+			if local_output[-1][0] == 'B':
+				# local_output[-1][0] = 'S'
+				local_output[-1]	=	f'S{local_output[-1][1:]}'
+			elif local_output[-1][0] == 'I':
+				# local_output[-1][0] = 'E'
+				local_output[-1]	=	f'E{local_output[-1][1:]}'
+		#####
 		global_output.append(local_output)
 	return global_output
 
@@ -234,8 +262,11 @@ def generate_features(text_base_path: str, features_memory_path: str, annot_prea
 		print(f'Generating features for text {i_count:>6} / {i_limit} : {i}',end='\r')
 		doc		=	nlp(text_base_df.loc[(text_base_df['id'] == i)]['text'].to_list()[0])
 	"""
-	for doc in nlp.pipe(text_base_df['text'].to_list(),n_process=2):
-		i	=	all_ids[i_count-1]
+	# for doc in nlp.pipe(text_base_df['text'].to_list(),n_process=2):
+	for doc in nlp.pipe(text_base_df['text'].to_list(),batch_size=32):
+		# i	=	all_ids[i_count-1]
+		i	=	id_list[i_count-1]
+		print(f'Generating features for text {i_count:>6} / {i_limit} : {i}',end='\r')
 		# REWORK HERE
 		for j in doc:
 			if anti_whitespace_regex.search(j.text) == None:
@@ -249,7 +280,8 @@ def generate_features(text_base_path: str, features_memory_path: str, annot_prea
 				attr			=	getattr(j,k)
 				attr			=	attr if '__call__' not in dir(attr) else attr()
 				# features[k]		=	attr
-				features[k.lstrip('_')]	=	attr
+				# features[k.lstrip('_')]	=	attr
+				features[k.lstrip('_')]	=	attr if type(attr) in [bool,int,str] else str(attr)
 			X_features.append(features)
 			
 			tok_start		=	j.idx
@@ -281,7 +313,7 @@ def generate_features(text_base_path: str, features_memory_path: str, annot_prea
 	print(f'Saved {features_memory_path}')
 	return memory_df
 
-def features_and_values_for_CRF(text_base_path: str, features_memory_path: str, annot_preamble_path: str, annot_judgement_path: str):
+def features_and_values_for_CRF(text_base_path: str, features_memory_path: str, annot_preamble_path: str, annot_judgement_path: str, clean: bool = False, clean_min_count: int = 0):
 	X_features	=	[]
 	y_values	=	[]
 	meta_info	=	[]
@@ -289,16 +321,62 @@ def features_and_values_for_CRF(text_base_path: str, features_memory_path: str, 
 	if not exists(features_memory_path):
 		print('Features were not found, generating them...')
 		features_df	=	generate_features(text_base_path, features_memory_path, annot_preamble_path, annot_judgement_path)
-		features_df.sort_values(['text_id','id_in_text'],kind='mergesort',inplace=True)
-		meta_info	=	features_df[['text_id','id_in_text','offset_start','offset_end']].to_dict('records')
-		features_df	=	features_df[[i.lstrip('_') for i in config["relevant_features"] if i not in config["irrelevant_features"]] + ['y_value','text_id']]
+		# features_df.sort_values(['text_id','id_in_text'],kind='mergesort',inplace=True)
+		# meta_info	=	features_df[['text_id','id_in_text','offset_start','offset_end']].to_dict('records')
+		# features_df	=	features_df[[i.lstrip('_') for i in config["relevant_features"] if i not in config["irrelevant_features"]] + ['y_value','text_id']]
 	else:
 		# features_df	=	pd.read_csv(features_memory_path,encoding=config["encoding"],sep=config["sep"], index_col='id', na_values='N/A',dtype=config["dtype"])[[i.lstrip('_') for i in config["relevant_features"] if i not in config["irrelevant_features"]] + ['y_value','text_id']].copy() #FIXED #IMPROVED
 		features_df	=	pd.read_csv(features_memory_path,encoding=config["encoding"],sep=config["sep"], index_col='id', na_values='N/A',dtype=config["dtype"]) #FIXED #IMPROVED
-		features_df.sort_values(['text_id','id_in_text'],kind='mergesort',inplace=True)
-		meta_info	=	features_df[['text_id','id_in_text','offset_start','offset_end']].to_dict('records')
-		features_df	=	features_df[[i.lstrip('_') for i in config["relevant_features"] if i not in config["irrelevant_features"]] + ['y_value','text_id']]
+		# features_df.sort_values(['text_id','id_in_text'],kind='mergesort',inplace=True)
+		# meta_info	=	features_df[['text_id','id_in_text','offset_start','offset_end']].to_dict('records')
+		# features_df	=	features_df[[i.lstrip('_') for i in config["relevant_features"] if i not in config["irrelevant_features"]] + ['y_value','text_id']]
 		print(f'Loaded features from {features_memory_path}')
+	features_df.sort_values(['text_id','id_in_text'],kind='mergesort',inplace=True)
+	
+	if "drop_rows_if_true" in config:
+		len_df	=	len(features_df)
+		
+		for i in config["drop_rows_if_true"]:
+			if i in features_df:
+				features_df	=	features_df[features_df[i] != True]
+		
+		print(f'Dropped {len_df-len(features_df)}')
+		
+	meta_info	=	features_df[['text_id','id_in_text','offset_start','offset_end']].to_dict('records')
+	features_df	=	features_df[[i.lstrip('_') for i in config["relevant_features"] if i not in config["irrelevant_features"]] + ['y_value','text_id']]
+	
+	##################
+	# CLEANING TRAIN
+	
+	if clean:
+		removed_count		=	0
+		acceptable_texts	=	[]
+		# features_df_gb	=	features_df.groupby(['text_id'])
+		features_df_gb	=	features_df.groupby('text_id')
+		for name, group in features_df_gb:
+			# if group['y_value'].unique == ['NONE'] and len(group) > 20:
+			# if group['y_value'].unique().tolist() == ['NONE'] and len(group) > 20:
+			if group['y_value'].unique().tolist() == ['NONE'] and len(group) > clean_min_count:
+				removed_count	+=	1
+			else:
+				acceptable_texts.append(name)
+		acceptable_texts	=	pd.Series(acceptable_texts)
+		acceptable_texts.name	=	'text_id'
+		features_df	=	pd.merge(features_df, acceptable_texts)
+		print(f'Removed {removed_count} texts in cleaning')
+	
+	
+	##################
+	"""
+	if "drop_rows_if_true" in config:
+		len_df	=	len(features_df)
+		
+		for i in config["drop_rows_if_true"]:
+			features_df	=	features_df[features_df[i] != True]
+		
+		print(f'Dropped {len_df-len(features_df)}')
+	"""
+	##################
 	
 	features_df.dropna(how='all',inplace=True)
 	
@@ -358,11 +436,35 @@ def features_and_values_for_CRF(text_base_path: str, features_memory_path: str, 
 		i_count	+=	1
 	
 	for i in X_features:
+		###
+		first_word	=	i[0]['text'] if 'text' in i[0] else None
+		last_word	=	i[-1]['text'] if 'text' in i[-1] else None
+		text_root	=	None
+		for j in i:
+			try:
+				# if 'head' in j and 'text' in j and getattr(j,'head') == getattr(j,'text'):
+				if ('head' in j and 'text' in j) and j['head'] == j['text']:
+					# text_root	=	getattr(j,'head')
+					text_root	=	j['head']
+					break
+			except:
+				pass
+		###
 		for j in i:
 			keys	=	list(j.keys())
 			for k in keys:
 				if j[k] == None or type(j[k]) not in [bool,int,str]:
 					j.pop(k)
+					###
+					
+					if first_word:
+						j['first_word']	=	first_word
+					if last_word:
+						j['last_word']	=	last_word
+					if text_root:
+						j['text_root']	=	text_root
+					
+					###
 	del(features_df)
 	return X_features, y_values, meta_info
 	
@@ -372,7 +474,7 @@ def train():
 		prepare_model()
 	# X_features, y_values	=	features_and_values_for_CRF(config["text_base_train_path"], config["features_memory_train_path"])
 	# X_features, y_values	=	features_and_values_for_CRF(config["text_base_train_path"], config["features_memory_train_path"], config["annot_preamble_train_path"] if "annot_preamble_train_path" in config else 'NONE', config["annot_judgement_train_path"] if "annot_judgement_train_path" in config else 'NONE')
-	X_features, y_values, meta_info	=	features_and_values_for_CRF(config["text_base_train_path"], config["features_memory_train_path"], config["annot_preamble_train_path"] if "annot_preamble_train_path" in config else 'NONE', config["annot_judgement_train_path"] if "annot_judgement_train_path" in config else 'NONE')
+	X_features, y_values, meta_info	=	features_and_values_for_CRF(config["text_base_train_path"], config["features_memory_train_path"], config["annot_preamble_train_path"] if "annot_preamble_train_path" in config else 'NONE', config["annot_judgement_train_path"] if "annot_judgement_train_path" in config else 'NONE', clean=config["clean_TRAIN"] if "clean_TRAIN" in config else False, clean_min_count=config["clean_min_count"] if "clean_min_count" in config else 0)
 	
 	del(meta_info)
 	
@@ -385,6 +487,43 @@ def train():
 		# print(f'User cancelled training')
 	
 	
+	################
+	
+	prediction	=	CRF_model.predict(X_features)
+	
+	if "early_IOB_mapping" in config:
+		if not config["early_IOB_mapping"]:
+			if "IOBES" in config and config["IOBES"]:
+				IOBES_y_values		=	IOBES_transformer(y_values)
+				IOBES_prediction	=	IOBES_transformer(prediction)
+				print(seqeval_classification_report(IOBES_y_values,IOBES_prediction,scheme=IOBES,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
+			else:
+				IOB_y_values	=	[]
+				IOB_prediction	=	[]
+				for i in range(len(y_values)):
+					reset_IOB_mapper()
+					local_y_values		=	[]
+					for j in range(len(y_values[i])):
+						local_y_values.append(IOB_mapper(y_values[i][j]))
+					IOB_y_values.append(local_y_values)
+					
+					reset_IOB_mapper()
+					local_prediction	=	[]
+					for j in range(len(y_values[i])):
+						local_prediction.append(IOB_mapper(prediction[i][j]))
+					IOB_prediction.append(local_prediction)
+				# print(seqeval.metrics.classification_report(IOB_y_values,IOB_prediction))
+				print(seqeval_classification_report(IOB_y_values,IOB_prediction,scheme=IOB2,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
+		else:
+			if "IOBES" in config and config["IOBES"]:
+				print(seqeval_classification_report(y_values,prediction,scheme=IOBES,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
+			else:
+				prediction	=	IOB_correcter(prediction)
+				print(seqeval_classification_report(y_values,prediction,scheme=IOB2,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
+	
+	################
+	
+	
 	if config["save_model"]:
 		try:
 			joblib.dump(CRF_model, config["model_path"])
@@ -394,6 +533,20 @@ def train():
 		else:
 			print(f'Saved {config["model_path"]}')
 	
+
+def levenshtein_distance(a,b):
+	len_a	=	len(a)
+	len_b	=	len(b)
+	if len_a == 0:
+		return len_b
+	if len_b == 0:
+		return len_a
+	if a[0] == b[0]:
+		return levenshtein_distance(a[1:],b[1:])
+	c	=	levenshtein_distance(a[1:],b[1:])
+	d	=	levenshtein_distance(a,b[1:])
+	e	=	levenshtein_distance(a[1:],b)
+	return 1 + min(c,d,e)
 
 
 def estimate_performance_on_dev():
@@ -436,7 +589,165 @@ def estimate_performance_on_dev():
 			if "IOBES" in config and config["IOBES"]:
 				print(seqeval_classification_report(y_values,prediction,scheme=IOBES,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
 			else:
+				prediction	=	IOB_correcter(prediction)
 				print(seqeval_classification_report(y_values,prediction,scheme=IOB2,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
+	
+	#<POST_TRAITEMENT>
+	
+	
+	indian_cities_df	=	pd.read_csv('indian_cities.csv',sep='\t',encoding='UTF-8')
+	indian_cities_df['city']	=	indian_cities_df['city'].str.lower()
+	indian_cities_df['state']	=	indian_cities_df['state'].str.lower()
+	cities_and_states	=	indian_cities_df['city'].tolist() + indian_cities_df['state'].tolist()
+	for i in range(len(X_features)):
+		max_j	=	len(X_features[i])
+		# for j in range(len(X_features[i])):
+		for j in range(max_j):
+			# print(X_features[i][j])
+			if prediction[i][j] != 'O':
+				continue
+			if 'text' not in X_features[i][j] or len(X_features[i][j]['text']) < 6:
+				continue
+			if j == 0 or 'text' not in X_features[i][j-1] or X_features[i][j-1]['text'].lower() != X_features[i][j-1]:
+				continue
+			# if j+1 == max_j or 'text' not in X_features[i][j+1] or X_features[i][j+1]['text'].lower() != X_features[i][j-1]:
+				# continue
+			local_lower	=	X_features[i][j]['text'].lower()
+			for k in cities_and_states:
+				# if local_lower in k:
+				if local_lower in k:
+					prediction[i][j]	=	'I-GPE'
+					break
+	prediction	=	IOB_correcter(prediction)
+	
+	
+	"""
+	for i in range(len(X_features)):
+		max_j	=	len(X_features[i])
+		# for j in range(len(X_features[i])):
+		for j in range(max_j):
+			if 'text' not in X_features[i][j]:
+				continue
+			if date_regex.fullmatch(X_features[i][j]['text'].strip()):
+				prediction[i][j]	=	'B-DATE'
+	"""
+	
+	for i in range(len(X_features)):
+		max_j	=	len(X_features[i])
+		# for j in range(len(X_features[i])):
+		for j in range(max_j):
+			if 'text' not in X_features[i][j]:
+				continue
+			if prediction[i][j] != 'O':
+				continue
+			if org_regex.fullmatch(X_features[i][j]['text'].strip()):
+				prediction[i][j]	=	'B-ORG'
+	
+	
+	# low
+	PERSON_types	=	['JUDGE','LAWYER','RESPONDENT','PETITIONER','WITNESS','OTHER_PERSON']
+	person_dict	=	{}
+	for i in range(len(X_features)):
+		current_PERSON	=	''
+		start_index	=	None
+		for j in range(len(X_features[i])):
+			# current_class	=	prediction[i][j][2:]
+			# if current_class in PERSON_types:
+			if prediction[i][j][2:] in PERSON_types:
+				current_class	=	prediction[i][j][2:]
+				if current_PERSON == '':
+					# start_index	=	meta_info[i][j]['start_index']
+					start_index	=	j
+				else:
+					current_PERSON	=	f'{current_PERSON} '
+				current_PERSON	=	f'{current_PERSON}{X_features[i][j]["text"]}'
+			else:
+				if current_PERSON != '':
+					
+					# min_lev_distance	=	1000
+					# min_index		=	None
+					# len_current_PERSON	=	len(current_PERSON)
+					# for k in person_dict:
+						# if abs(len_current_PERSON-len(k)) > 2 or len_current_PERSON < 32 or len(k) < 32:
+							# continue
+						# local_lev_distance	=	levenshtein_distance(k,current_PERSON)
+						# if local_lev_distance < min_lev_distance:
+							# min_lev_distance	=	local_lev_distance
+							# min_index		=	k
+					# if min_index != None and min_lev_distance < 5:
+						# current_PERSON	=	min_index
+					
+					
+					
+					
+					
+					
+					if current_PERSON not in person_dict:
+						# person_dict[current_PERSON]	=	{'count':0,'instances':[]}
+						person_dict[current_PERSON]	=	{'count':0,'count_per_class':{},'instances':[]}
+					person_dict[current_PERSON]['count']	+=	1
+					if current_class not in person_dict[current_PERSON]['count_per_class']:
+						person_dict[current_PERSON]['count_per_class'][current_class]	=	0
+					person_dict[current_PERSON]['count_per_class'][current_class]	+=	1
+					person_dict[current_PERSON]['instances'].append((i,start_index))
+					current_PERSON	=	''
+	# print(person_dict)
+	# exit()
+	
+	"""
+	#DETRIMENTAL
+	for i in person_dict:
+		if person_dict[i]['count'] == 1:
+			# for j in person_dict[i]['instances']:
+			for j in range(len(person_dict[i]['instances'])):
+				# prediction[i][j]	=	'B-OTHER_PERSON'
+				# print(person_dict[i]['instances'][j])
+				prediction[person_dict[i]['instances'][j][0]][person_dict[i]['instances'][j][1]]	=	'B-OTHER_PERSON'
+				# k	=	j+1
+				k	=	person_dict[i]['instances'][j][1]+1
+				# k_limit	=	len(prediction[i])
+				k_limit	=	len(prediction[person_dict[i]['instances'][j][0]])
+				while k < k_limit:
+					# if prediction[i][k][0] == 'I':
+					if prediction[person_dict[i]['instances'][j][0]][k][0] == 'I':
+						# prediction[i][k]	=	'I-OTHER_PERSON'
+						prediction[person_dict[i]['instances'][j][0]][k]	=	'I-OTHER_PERSON'
+						k	+=	1
+					else:
+						break
+	"""
+	
+	
+	for i in person_dict:
+		new_class	=	max(person_dict[i]['count_per_class'])
+		# print(i,person_dict[i]['count_per_class'],new_class)
+		# if person_dict[i]['count'] == 1:
+		# for j in person_dict[i]['instances']:
+		for j in range(len(person_dict[i]['instances'])):
+			# prediction[i][j]	=	'B-OTHER_PERSON'
+			# print(person_dict[i]['instances'][j])
+			# prediction[person_dict[i]['instances'][j][0]][person_dict[i]['instances'][j][1]]	=	'B-OTHER_PERSON'
+			prediction[person_dict[i]['instances'][j][0]][person_dict[i]['instances'][j][1]]	=	f'B-{new_class}'
+			# k	=	j+1
+			k	=	person_dict[i]['instances'][j][1]+1
+			# k_limit	=	len(prediction[i])
+			k_limit	=	len(prediction[person_dict[i]['instances'][j][0]])
+			while k < k_limit:
+				# if prediction[i][k][0] == 'I':
+				if prediction[person_dict[i]['instances'][j][0]][k][0] == 'I':
+					# prediction[i][k]	=	'I-OTHER_PERSON'
+					# prediction[person_dict[i]['instances'][j][0]][k]	=	'B-OTHER_PERSON'
+					prediction[person_dict[i]['instances'][j][0]][k]	=	f'I-{new_class}'
+					k	+=	1
+				else:
+					break
+	
+	if "IOBES" in config and config["IOBES"]:
+		print(seqeval_classification_report(y_values,prediction,scheme=IOBES,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
+	else:
+		prediction	=	IOB_correcter(prediction)
+		print(seqeval_classification_report(y_values,prediction,scheme=IOB2,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
+	#</POST_TRAITEMENT>
 	
 		
 	
@@ -749,6 +1060,8 @@ def estimate_performance_on_dev():
 		'type_micro_f1'	:	type_micro_f1
 	}
 	"""
+	
+	config["training"]	=	False
 	
 	json_config_path	=	f'{config["model_path"][:-3]}_config.json'
 	try:
