@@ -1,3 +1,9 @@
+"""
+AUTHOR		:	UNIVERSITY OF ORLEANS (FRANCE)
+TASK		:	LEGALEVAL2023
+SUB-TASK	:	L-NER
+"""
+
 import time
 import re
 # import spacy
@@ -22,15 +28,7 @@ config_path		=	'default_CRF_config2.json'
 
 ########################################
 
-try:
-	config_file	=	open(config_path,'rt',encoding='UTF-8')
-	config		=	json.load(config_file)
-	config_file.close()
-except IOError or OSError as e:
-	print(e)
-	print(f'Could not start script without configuration file, exitting')
-	exit()
-print(f'Loaded configuration from file {config_path}')
+config				=	None
 
 ########################################
 
@@ -44,12 +42,28 @@ annot_df			=	None
 
 previous_class			=	'NONE'
 def reset_IOB_mapper() -> None:
+	'''
+	This function resets the IOB memory for use in IOB_mapper function.
+	
+	def reset_IOB_mapper() -> None:
+		[...]
+	'''
+	########
 	global previous_class
 	previous_class		=	'NONE'
 
 def IOB_mapper(
 		x	:	str
 	) -> str:
+	'''
+	This function is to be called iteratively to transform data into an IOB2 format.
+	Before calling it for the first time on a text, make sure to call reset_IOB_mapper.
+	
+	def IOB_mapper(
+			x	:	str
+		) -> str:
+		[...]
+	'''
 	########
 	global previous_class
 	if x == 'NONE':
@@ -65,6 +79,14 @@ def IOB_mapper(
 def IOB_correcter(
 		x	:	list
 	):
+	'''
+	This function ensures that all annotations start with a B and not an I according to IOB-like formats.
+	
+	def IOB_correcter(
+			x	:	list
+		):
+		[...]
+	'''
 	########
 	for i in range(len(x)):
 		previous_IOB	=	'O'
@@ -78,6 +100,14 @@ def IOB_correcter(
 def IOBES_transformer(
 		x	:	list
 	) -> list:
+	'''
+	This function transforms x into an IOBES-compliant format.
+	
+	def IOBES_transformer(
+			x	:	list
+		) -> list:
+		[...]
+	'''
 	########
 	global_output	=	[]
 	for i in x:
@@ -116,16 +146,33 @@ def IOBES_transformer(
 	return global_output
 
 def seqeval_report(
-		y_values	:	list	,
+		y_values	:	list,
 		prediction	:	list
 	):
+	'''
+	This function prints a seqeval report based on the two inputs.
+	
+	def seqeval_report(
+			y_values	:	list,
+			prediction	:	list
+		):
+		[...]
+	'''
 	########
 	if "early_IOB_mapping" in config:
 		if not config["early_IOB_mapping"]:
 			if "IOBES" in config and config["IOBES"]:
 				IOBES_y_values		=	IOBES_transformer(y_values)
 				IOBES_prediction	=	IOBES_transformer(prediction)
-				print(seqeval_classification_report(IOBES_y_values,IOBES_prediction,scheme=IOBES,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
+				print(
+					seqeval_classification_report(
+								IOBES_y_values,
+								IOBES_prediction,
+						scheme	=	IOBES,
+						digits	=	3,
+						mode	=	'strict' if 'mode' not in config else config["mode"]
+					)
+				)
 			else:
 				IOB_y_values	=	[]
 				IOB_prediction	=	[]
@@ -141,17 +188,49 @@ def seqeval_report(
 					for j in range(len(y_values[i])):
 						local_prediction.append(IOB_mapper(prediction[i][j]))
 					IOB_prediction.append(local_prediction)
-				print(seqeval_classification_report(IOB_y_values,IOB_prediction,scheme=IOB2,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
+				print(
+					seqeval_classification_report(
+								IOB_y_values,
+								IOB_prediction,
+						scheme	=	IOB2,
+						digits	=	3,
+						mode	=	'strict' if 'mode' not in config else config["mode"]
+					)
+				)
 		else:
 			if "IOBES" in config and config["IOBES"]:
-				print(seqeval_classification_report(y_values,prediction,scheme=IOBES,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
+				print(
+					seqeval_classification_report(
+								y_values,
+								prediction,
+						scheme	=	IOBES,
+						digits	=	3,
+						mode	=	'strict' if 'mode' not in config else config["mode"]
+					)
+				)
 			else:
 				prediction	=	IOB_correcter(prediction)
-				print(seqeval_classification_report(y_values,prediction,scheme=IOB2,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
+				print(
+					seqeval_classification_report(
+								y_values,
+								prediction,
+						scheme	=	IOB2,
+						digits	=	3,
+						mode	=	'strict' if 'mode' not in config else config["mode"]
+					)
+				)
 	
 	return y_values, prediction
 
 def prepare_model():
+	'''
+	This function prepares the model which is then stored in CRF_model (global).
+	It bases itself in the config object that comes from the JSON configuration file.
+	
+	def prepare_model():
+		[...]
+	'''
+	########
 	global CRF_model
 	
 	if CRF_model == None and config["load_model"] and exists(config["model_path"]):
@@ -186,15 +265,36 @@ def prepare_model():
 	return 0
 
 def generate_features(
-		text_base_path		:	str	,
-		features_memory_path	:	str	,
-		annot_preamble_path	:	str	,
+		text_base_path		:	str,
+		features_memory_path	:	str,
+		annot_preamble_path	:	str,
 		annot_judgement_path	:	str
 	):
+	'''
+	This function is to be called if no features were stored previously.
+	It generates the features using SpaCy based on the config parameters and saves them accordingly for them to be reloaded later.
+	
+	def generate_features(
+			text_base_path		:	str,
+			features_memory_path	:	str,
+			annot_preamble_path	:	str,
+			annot_judgement_path	:	str
+		):
+		[...]
+	'''
 	########
-	preamble_df	=	pd.read_csv(annot_preamble_path, encoding=config["encoding"], sep=config["sep"])
+	preamble_df	=	pd.read_csv(
+					annot_preamble_path,
+		encoding	=	config["encoding"],
+		sep		=	config["sep"]
+	)
 	preamble_df.dropna(how='all',inplace=True)
-	judgement_df	=	pd.read_csv(annot_judgement_path, encoding=config["encoding"], sep=config["sep"])
+	
+	judgement_df	=	pd.read_csv(
+					annot_judgement_path,
+		encoding	=	config["encoding"],
+		sep		=	config["sep"]
+	)
 	judgement_df.dropna(how='all',inplace=True)
 	
 	annot_df	=	pd.concat((preamble_df,judgement_df))
@@ -268,13 +368,30 @@ def generate_features(
 	return memory_df
 
 def features_and_values_for_CRF(
-		text_base_path		:	str			,
-		features_memory_path	:	str			,
-		annot_preamble_path	:	str			,
-		annot_judgement_path	:	str			,
-		clean			:	bool	=	False	,
+		text_base_path		:	str,
+		features_memory_path	:	str,
+		annot_preamble_path	:	str,
+		annot_judgement_path	:	str,
+		clean			:	bool	=	False,
 		clean_min_count		:	int	=	0
 	):
+	'''
+	This function returns features, prediction values, and meta information, each in a separate list.
+	Therefore, results are to be obtained through :
+		features, values, meta	=	features_and_values_for_CRF(...)
+	Features and predictions values are the most important, meta information are mostly given for postprocessing and potentially future changes.
+	
+	
+	def features_and_values_for_CRF(
+			text_base_path		:	str,
+			features_memory_path	:	str,
+			annot_preamble_path	:	str,
+			annot_judgement_path	:	str,
+			clean			:	bool	=	False,
+			clean_min_count		:	int	=	0
+		):
+		[...]
+	'''
 	########
 	X_features	=	[]
 	y_values	=	[]
@@ -282,9 +399,21 @@ def features_and_values_for_CRF(
 	
 	if not exists(features_memory_path):
 		print('Features were not found, generating them...')
-		features_df	=	generate_features(text_base_path, features_memory_path, annot_preamble_path, annot_judgement_path)
+		features_df	=	generate_features(
+			text_base_path,
+			features_memory_path,
+			annot_preamble_path,
+			annot_judgement_path
+		)
 	else:
-		features_df	=	pd.read_csv(features_memory_path,encoding=config["encoding"],sep=config["sep"], index_col='id', na_values='N/A',dtype=config["dtype"]) #FIXED #IMPROVED
+		features_df	=	pd.read_csv(
+						features_memory_path,
+			encoding	=	config["encoding"],
+			sep		=	config["sep"],
+			index_col	=	'id',
+			na_values	=	'N/A',
+			dtype		=	config["dtype"]
+		)
 		print(f'Loaded features from {features_memory_path}')
 	features_df.sort_values(['text_id','id_in_text'],kind='mergesort',inplace=True)
 	
@@ -308,8 +437,6 @@ def features_and_values_for_CRF(
 		acceptable_texts	=	[]
 		features_df_gb	=	features_df.groupby('text_id')
 		for name, group in features_df_gb:
-			# if group['y_value'].unique == ['NONE'] and len(group) > 20:
-			# if group['y_value'].unique().tolist() == ['NONE'] and len(group) > 20:
 			if group['y_value'].unique().tolist() == ['NONE'] and len(group) > clean_min_count:
 				removed_count	+=	1
 			else:
@@ -412,10 +539,24 @@ def features_and_values_for_CRF(
 	return X_features, y_values, meta_info
 	
 def train():
+	'''
+	This function trains the model stored in CRF_model.
+	
+	def train():
+		[...]
+	'''
+	########
 	global CRF_model
 	if CRF_model == None:
 		prepare_model()
-	X_features, y_values, meta_info	=	features_and_values_for_CRF(config["text_base_train_path"], config["features_memory_train_path"], config["annot_preamble_train_path"] if "annot_preamble_train_path" in config else 'NONE', config["annot_judgement_train_path"] if "annot_judgement_train_path" in config else 'NONE', clean=config["clean_TRAIN"] if "clean_TRAIN" in config else False, clean_min_count=config["clean_min_count"] if "clean_min_count" in config else 0)
+	X_features, y_values, meta_info	=	features_and_values_for_CRF(
+					config["text_base_train_path"],
+					config["features_memory_train_path"],
+					config["annot_preamble_train_path"] if "annot_preamble_train_path" in config else 'NONE',
+					config["annot_judgement_train_path"] if "annot_judgement_train_path" in config else 'NONE',
+		clean		=	config["clean_TRAIN"] if "clean_TRAIN" in config else False,
+		clean_min_count	=	config["clean_min_count"] if "clean_min_count" in config else 0
+	)
 	
 	del(meta_info)
 	
@@ -423,41 +564,10 @@ def train():
 	
 	################
 	
-	prediction	=	CRF_model.predict(X_features)
-	
-	"""
-	if "early_IOB_mapping" in config:
-		if not config["early_IOB_mapping"]:
-			if "IOBES" in config and config["IOBES"]:
-				IOBES_y_values		=	IOBES_transformer(y_values)
-				IOBES_prediction	=	IOBES_transformer(prediction)
-				print(seqeval_classification_report(IOBES_y_values,IOBES_prediction,scheme=IOBES,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
-			else:
-				IOB_y_values	=	[]
-				IOB_prediction	=	[]
-				for i in range(len(y_values)):
-					reset_IOB_mapper()
-					local_y_values		=	[]
-					for j in range(len(y_values[i])):
-						local_y_values.append(IOB_mapper(y_values[i][j]))
-					IOB_y_values.append(local_y_values)
-					
-					reset_IOB_mapper()
-					local_prediction	=	[]
-					for j in range(len(y_values[i])):
-						local_prediction.append(IOB_mapper(prediction[i][j]))
-					IOB_prediction.append(local_prediction)
-				print(seqeval_classification_report(IOB_y_values,IOB_prediction,scheme=IOB2,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
-		else:
-			if "IOBES" in config and config["IOBES"]:
-				print(seqeval_classification_report(y_values,prediction,scheme=IOBES,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
-			else:
-				prediction	=	IOB_correcter(prediction)
-				print(seqeval_classification_report(y_values,prediction,scheme=IOB2,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
-	"""
+	prediction		=	CRF_model.predict(X_features)
 	
 	y_values, prediction	=	seqeval_report(
-		y_values	,
+		y_values,
 		prediction
 	)
 	
@@ -475,9 +585,18 @@ def train():
 	
 
 def levenshtein_distance(
-		a	:	str	,
+		a	:	str,
 		b	:	str
-	):
+	) -> int:
+	'''
+	This function computes the Levenshtein distance between two strings.
+	
+	def levenshtein_distance(
+			a	:	str,
+			b	:	str
+		) -> int:
+		[...]
+	'''
 	########
 	len_a	=	len(a)
 	len_b	=	len(b)
@@ -494,6 +613,13 @@ def levenshtein_distance(
 
 
 def estimate_performance_on_dev():
+	'''
+	This function estimates the performance on the DEV set using the model stored in CRF_model.
+	
+	def estimate_performance_on_dev():
+		[...]
+	'''
+	########
 	global CRF_model
 	if CRF_model == None:
 		print('No CRF_model available, cannot estimate performance on DEV')
@@ -502,39 +628,8 @@ def estimate_performance_on_dev():
 	
 	prediction	=	CRF_model.predict(X_features)
 	
-	"""
-	if "early_IOB_mapping" in config:
-		if not config["early_IOB_mapping"]:
-			if "IOBES" in config and config["IOBES"]:
-				IOBES_y_values		=	IOBES_transformer(y_values)
-				IOBES_prediction	=	IOBES_transformer(prediction)
-				print(seqeval_classification_report(IOBES_y_values,IOBES_prediction,scheme=IOBES,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
-			else:
-				IOB_y_values	=	[]
-				IOB_prediction	=	[]
-				for i in range(len(y_values)):
-					reset_IOB_mapper()
-					local_y_values		=	[]
-					for j in range(len(y_values[i])):
-						local_y_values.append(IOB_mapper(y_values[i][j]))
-					IOB_y_values.append(local_y_values)
-					
-					reset_IOB_mapper()
-					local_prediction	=	[]
-					for j in range(len(y_values[i])):
-						local_prediction.append(IOB_mapper(prediction[i][j]))
-					IOB_prediction.append(local_prediction)
-				print(seqeval_classification_report(IOB_y_values,IOB_prediction,scheme=IOB2,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
-		else:
-			if "IOBES" in config and config["IOBES"]:
-				print(seqeval_classification_report(y_values,prediction,scheme=IOBES,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
-			else:
-				prediction	=	IOB_correcter(prediction)
-				print(seqeval_classification_report(y_values,prediction,scheme=IOB2,digits=3,mode='strict' if 'mode' not in config else config["mode"]))
-	"""
-	
 	y_values, prediction	=	seqeval_report(
-		y_values	,
+		y_values,
 		prediction
 	)
 	
@@ -1003,6 +1098,18 @@ def print_state_features(state_features):
 		print("%0.6f %-8s %s" % (weight, label, attr))
 
 def main() -> int:
+	global config
+	try:
+		config_file	=	open(config_path,'rt',encoding='UTF-8')
+		config		=	json.load(config_file)
+		config_file.close()
+	except IOError or OSError as e:
+		print(e)
+		print(f'Could not start script without configuration file, exitting')
+		exit()
+	print(f'Loaded configuration from file {config_path}')
+	
+	
 	global CRF_model
 	prepare_model()
 
