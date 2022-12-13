@@ -1,2 +1,5 @@
 data/*.csv
 venv*
+*.pl
+*.csv
+*CRF3_config.json
