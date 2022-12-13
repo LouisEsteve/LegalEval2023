@@ -23,14 +23,6 @@ python corpus_splitter_v2.py
 ```
 
 Si vous utilisez les CRFs, d'autres fichiers seront générés automatiquement par le script de CRF, ceux-ci devraient s'autogérer.
-
-## Regex
-
-Avant de pouvoir utiliser l'outil de tests de regex, il est conseillé de placer les fichiers originaux de corpus dans un répertoire `data` et  d'utiliser le parser `parser1.py` qui créera des fichiers CSV pour faciliter la tâche.
-Pour tester les regex, il faut lancer `main.py` ; celui-ci récupère les motifs présents dans `regex_config.json` et les teste sur les ensembles de données spécifiés dans ce même fichier.
-Concernant `main.py`, des paramètres peuvent être modifiés dans le header pour faciliter la prise en main : `print_false_positives`, `print_false_negatives` et `print_true_positive` peuvent prendre `True` ou `False` pour faciliter la visualisation des résultats.
-Aussi, il est possible de modifier `excluded_tags` pour que le système ignore ou non certaines regex contenues dans `regex_config.json`, entre autres pour pouvoir en tester une sans avoir à réécrire tout le fichier `regex_config.json` ou attendre longuement qu'elles tournent toutes.
-
 ## CRF
 
 La version la plus évoluée du système CRF que nous avons est exécutable par
@@ -49,3 +41,10 @@ Le script
 - calcule sa performance sur l'ensemble DEV selon différentes métriques (précision, rappel, F1, perfect/relaxed match)
 - génère un fichier de configuration système avec un nom similaire à celui que vous avez donné au système (`*_config.json`) ; cela permet de recharger exactement les bons paramètres si vous souhaitez recharger le système (par défaut, si vous laissez le nom de fichier du modèle dans le fichier de configuration, le script le rechargera tel qu'il a été sauvegardé).
 - garde une trace des prédictions réalisées dans `latest_results.csv` (à la condition d'avoir la _feature_ 'text' sélectionnée) si jamais l'on souhaite comparer en détails ce qui a été prédit ce qui aurait dû l'être.
+
+## Regex
+
+Avant de pouvoir utiliser l'outil de tests de regex, il est conseillé de placer les fichiers originaux de corpus dans un répertoire `data` et  d'utiliser le parser `parser1.py` qui créera des fichiers CSV pour faciliter la tâche.
+Pour tester les regex, il faut lancer `main.py` ; celui-ci récupère les motifs présents dans `regex_config.json` et les teste sur les ensembles de données spécifiés dans ce même fichier.
+Concernant `main.py`, des paramètres peuvent être modifiés dans le header pour faciliter la prise en main : `print_false_positives`, `print_false_negatives` et `print_true_positive` peuvent prendre `True` ou `False` pour faciliter la visualisation des résultats.
+Aussi, il est possible de modifier `excluded_tags` pour que le système ignore ou non certaines regex contenues dans `regex_config.json`, entre autres pour pouvoir en tester une sans avoir à réécrire tout le fichier `regex_config.json` ou attendre longuement qu'elles tournent toutes.
