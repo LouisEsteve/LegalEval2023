@@ -3,3 +3,10 @@ venv*
 *.pl
 *.csv
 *CRF3_config.json
+__pychache__/*
+*.db
+*.html
+NER_DEV/*
+*.zip
+*.feather
+*.pt
