@@ -635,14 +635,14 @@ def post_traitement(
 	# if "enable_cities_query" in config and config["enable_cities_query"]:
 	if enable_cities_query:
 		try:
-			indian_cities_df		=	pd.read_csv('cities.csv' if "cities_path" not in config else config["cities_path"],sep='\t',encoding='UTF-8')
+			cities_df		=	pd.read_csv('cities.csv' if "cities_path" not in config else config["cities_path"],sep='\t',encoding='UTF-8')
 		except OSError or IOError as e:
 			print(e)
 			print("Could not open path to cities file. See message above.")
 		else:
-			indian_cities_df['city']	=	indian_cities_df['city'].str.lower()
-			indian_cities_df['state']	=	indian_cities_df['state'].str.lower()
-			cities_and_states		=	indian_cities_df['city'].tolist() + indian_cities_df['state'].tolist()
+			cities_df['city']	=	cities_df['city'].str.lower()
+			cities_df['state']	=	cities_df['state'].str.lower()
+			cities_and_states		=	cities_df['city'].tolist() + cities_df['state'].tolist()
 			for i in range(len(X_features)):
 				max_j	=	len(X_features[i])
 				for j in range(max_j):

@@ -16,7 +16,6 @@ import pandas as pd
 import joblib
 import json
 import sklearn_crfsuite
-from sklearn.metrics import accuracy_score, cohen_kappa_score
 from seqeval.metrics.sequence_labeling import classification_report as seqeval_classification_report
 from seqeval.scheme import IOB2, IOBES
 import json
@@ -138,6 +137,7 @@ def features_for_CRF_from_SpaCy_doc(
 	look_ahead	=	config["look_ahead"]
 	len_X_features	=	len(X_features)
 	for j in range(len_X_features):
+		"""
 		for k in range(j-look_behind,j+look_ahead+1):
 			if k < 0 or k >= len_X_features or k == j:
 				continue
@@ -146,11 +146,189 @@ def features_for_CRF_from_SpaCy_doc(
 				if m[0] in ['-','+']:
 					continue
 				X_features[j][f"{prefix}{m}"]	=	X_features[k][m]
+		"""
+		
+		for k in range(-look_behind,look_ahead+1):
+			if k == 0 or j+k < 0 or j+k >= len_X_features:
+				continue
+			prefix	=	f"{'+' if k > 0 else ''}{k}:"
+			for m in X_features[j+k]:
+				if m[0] in ['-','+']:
+					continue
+				X_features[j][f"{prefix}{m}"]	=	X_features[j+k][m]
 	
 	if __debug__:
 		assert len(X_features) == len(X_offsets)
 	
 	return X_features, X_offsets
+
+
+def post_processing_from_raw_offsets(
+		raw_texts		:	list,
+		# X_features		:	list,
+		# prediction		:	list,
+		enable_cities_query	:	bool	=	False,
+		enable_DATE_regex	:	bool	=	False,
+		enable_ORG_regex	:	bool	=	False
+	) -> list:
+	'''
+	This function takes the features and predictions, and returns the predictions once post-processing has been done.
+	
+	def post_traitement(
+			X_features	:	list,
+			prediction	:	list
+		) -> list:
+	'''
+	#<POST_TRAITEMENT>
+	
+	output_annotations	=	[{} for i in raw_texts]
+	
+	# if "enable_cities_query" in config and config["enable_cities_query"]:
+	if enable_cities_query:
+		try:
+			cities_df		=	pd.read_csv('cities.csv' if "cities_path" not in config else config["cities_path"],sep='\t',encoding='UTF-8')
+		except OSError or IOError as e:
+			print(e)
+			print("Could not open path to cities file. See message above.")
+		else:
+			cities_df['city']	=	cities_df['city'].str.lower()
+			cities_df['state']	=	cities_df['state'].str.lower()
+			cities_and_states	=	cities_df['city'].tolist() + cities_df['state'].tolist()
+			"""
+			for i in range(len(X_features)):
+				max_j	=	len(X_features[i])
+				for j in range(max_j):
+					if prediction[i][j] != 'O':
+						continue
+					if 'text' not in X_features[i][j] or len(X_features[i][j]['text']) < 6:
+						continue
+					if j == 0 or 'text' not in X_features[i][j-1] or X_features[i][j-1]['text'].lower() != X_features[i][j-1]:
+						continue
+					local_lower	=	X_features[i][j]['text'].lower()
+					for k in cities_and_states:
+						if local_lower in k:
+							prediction[i][j]	=	'I-GPE'
+							break
+			"""
+			
+			for i in range(len(raw_texts)):
+				# i	=	i.lower()
+				i_lower	=	raw_texts[i].lower()
+				if 'GPE' not in output_annotations[i]:
+					output_annotations[i]['GPE']	=	[]
+				for j in cities_and_states:
+					local_find	=	i_lower.find(j)
+					if local_find >= 0:
+						output_annotations[i]['GPE'].append((local_find,local_find+len(j)))
+	# prediction	=	IOB_correcter(prediction)
+	
+	
+	
+	# if "enable_DATE_regex" in config and config["enable_DATE_regex"]:
+	if enable_DATE_regex:
+		for i in range(len(raw_texts)):
+			if 'DATE' not in output_annotations[i]:
+				output_annotations[i]['DATE']	=	[]
+			for j in date_regex.finditer(raw_texts[i]):
+				output_annotations[i]['DATE'].append((j.start(),j.end()))
+		
+	
+	# if "enable_ORG_regex" in config and config["enable_ORG_regex"]:
+	if enable_ORG_regex:
+		for i in range(len(raw_texts)):
+			if 'ORG' not in output_annotations[i]:
+				output_annotations[i]['ORG']	=	[]
+			for j in org_regex.finditer(raw_texts[i]):
+				output_annotations[i]['ORG'].append((j.start(),j.end()))
+	
+	'''
+	# low
+	PERSON_types	=	['JUDGE','LAWYER','RESPONDENT','PETITIONER','WITNESS','OTHER_PERSON']
+	person_dict	=	{}
+	for i in range(len(X_features)):
+		current_PERSON	=	''
+		start_index	=	None
+		for j in range(len(X_features[i])):
+			# current_class	=	prediction[i][j][2:]
+			# if current_class in PERSON_types:
+			if prediction[i][j][2:] in PERSON_types:
+				current_class	=	prediction[i][j][2:]
+				if current_PERSON == '':
+					start_index	=	j
+				else:
+					current_PERSON	=	f'{current_PERSON} '
+				current_PERSON	=	f'{current_PERSON}{X_features[i][j]["text"]}'
+			else:
+				if current_PERSON != '':
+					"""
+					min_lev_distance	=	1000
+					min_index		=	None
+					len_current_PERSON	=	len(current_PERSON)
+					for k in person_dict:
+						if abs(len_current_PERSON-len(k)) > 2 or len_current_PERSON < 32 or len(k) < 32:
+							continue
+						local_lev_distance	=	levenshtein_distance(k,current_PERSON)
+						if local_lev_distance < min_lev_distance:
+							min_lev_distance	=	local_lev_distance
+							min_index		=	k
+					if min_index != None and min_lev_distance < 5:
+						current_PERSON	=	min_index
+					"""
+					
+					if current_PERSON not in person_dict:
+						# person_dict[current_PERSON]	=	{'count':0,'instances':[]}
+						person_dict[current_PERSON]	=	{'count':0,'count_per_class':{},'instances':[]}
+					person_dict[current_PERSON]['count']	+=	1
+					if current_class not in person_dict[current_PERSON]['count_per_class']:
+						person_dict[current_PERSON]['count_per_class'][current_class]	=	0
+					person_dict[current_PERSON]['count_per_class'][current_class]	+=	1
+					person_dict[current_PERSON]['instances'].append((i,start_index))
+					current_PERSON	=	''
+	'''
+	
+	
+	"""
+	#DETRIMENTAL
+	for i in person_dict:
+		if person_dict[i]['count'] == 1:
+			# for j in person_dict[i]['instances']:
+			for j in range(len(person_dict[i]['instances'])):
+				# prediction[i][j]	=	'B-OTHER_PERSON'
+				# print(person_dict[i]['instances'][j])
+				prediction[person_dict[i]['instances'][j][0]][person_dict[i]['instances'][j][1]]	=	'B-OTHER_PERSON'
+				# k	=	j+1
+				k	=	person_dict[i]['instances'][j][1]+1
+				# k_limit	=	len(prediction[i])
+				k_limit	=	len(prediction[person_dict[i]['instances'][j][0]])
+				while k < k_limit:
+					# if prediction[i][k][0] == 'I':
+					if prediction[person_dict[i]['instances'][j][0]][k][0] == 'I':
+						# prediction[i][k]	=	'I-OTHER_PERSON'
+						prediction[person_dict[i]['instances'][j][0]][k]	=	'I-OTHER_PERSON'
+						k	+=	1
+					else:
+						break
+	"""
+	
+	"""
+	for i in person_dict:
+		new_class	=	max(person_dict[i]['count_per_class'])
+		# print(i,person_dict[i]['count_per_class'],new_class)
+		for j in range(len(person_dict[i]['instances'])):
+			# print(person_dict[i]['instances'][j])
+			prediction[person_dict[i]['instances'][j][0]][person_dict[i]['instances'][j][1]]	=	f'B-{new_class}'
+			k	=	person_dict[i]['instances'][j][1]+1
+			k_limit	=	len(prediction[person_dict[i]['instances'][j][0]])
+			while k < k_limit:
+				if prediction[person_dict[i]['instances'][j][0]][k][0] == 'I':
+					prediction[person_dict[i]['instances'][j][0]][k]	=	f'I-{new_class}'
+					k	+=	1
+				else:
+					break
+	"""
+	
+	return output_annotations
+
 
 def levenshtein_distance(
 		a	:	str,
@@ -307,7 +485,9 @@ def main() -> int:
 			j_count	+=	1	#!
 		j_count	=	1
 		
+		print('\nPrediction:')
 		prediction_full	=	CRF_model.predict(X_features_full)
+		"""
 		prediction_full	=	post_traitement(
 			X_features		=	X_features_full,
 			prediction		=	prediction_full,
@@ -315,9 +495,12 @@ def main() -> int:
 			enable_DATE_regex	=	"enable_DATE_regex" in config and config["enable_DATE_regex"],
 			enable_ORG_regex	=	"enable_ORG_regex" in config and config["enable_ORG_regex"]
 		)
+		"""
 		
-		print('\nPrediction:')
+		occupied_offsets	=	{}
+		
 		for j in corpus_objects[i]:
+			occupied_offsets[j["id"]]	=	[]
 			# print(f'{j_count:>6} / {len_i} ; id={j["id"]}',end="\r")
 			print(f'File {file_count}/{n_files} ({i}); text {j_count}/{len_i} ({j["id"]})',end='\r')
 			
@@ -353,6 +536,7 @@ def main() -> int:
 						start_index	=	None
 						end_index	=	None
 						NE_type		=	None
+						occupied_offsets[j["id"]].append((start_index,end_index))
 						annot_count	+=	1
 				if prediction[k].startswith('B-') or prediction[k].startswith('S-'):
 					start_index	=	X_offsets[k][0]
@@ -381,11 +565,51 @@ def main() -> int:
 				start_index	=	None
 				end_index	=	None
 				NE_type		=	None
+				occupied_offsets[j["id"]].append((start_index,end_index))
 				annot_count	+=	1
 
 			j["annotations"].append(result_obj)
 			j_count	+=	1
-
+		
+		
+		# POST_PROCESSING FROM RAW OFFSETS
+		
+		post_processing_annotations	=	post_processing_from_raw_offsets(
+			raw_texts		=	text_list,
+			enable_cities_query	=	"enable_cities_query" in config and config["enable_cities_query"],
+			enable_DATE_regex	=	"enable_DATE_regex" in config and config["enable_DATE_regex"],
+			enable_ORG_regex	=	"enable_ORG_regex" in config and config["enable_ORG_regex"]
+		)
+		post_processing_added_annotations_count	=	0
+		for j in range(len(post_processing_annotations)):
+			for k in post_processing_annotations[j]:
+				# for m in post_processing_annotations[j][k]:
+				for m in range(len(post_processing_annotations[j][k])):
+					# if post_processing_annotations[j][k][m] not in occupied_offsets[j]:
+					if post_processing_annotations[j][k][m] not in occupied_offsets[id_list[j]]:
+						start_index	=	post_processing_annotations[j][k][m][0]
+						end_index	=	post_processing_annotations[j][k][m][1]
+						value_obj	=	{
+							"start"		:	start_index,
+							"end"		:	end_index,
+							"text"		:	text_list[j][start_index:end_index],
+							"labels"	:	[
+								k
+							]
+						}
+						result_obj["result"].append({
+							"value"		:	value_obj,
+							"id"		:	f"ANNOT_{annot_count}",
+							"from_name"	:	"label",
+							"to_name"	:	"text",
+							"type"		:	"labels"
+						})
+						annot_count	+=	1
+						# occupied_offsets[j].append((start_index,end_index))
+						occupied_offsets[id_list[j]].append((start_index,end_index))
+						post_processing_added_annotations_count	+=	1
+		print(f'\nPost-processing added {post_processing_added_annotations_count} annotations')
+		
 		output_path	=	f"{i[:-5]}_OUTPUT.json"
 		try:
 			output_file	=	open(output_path,"wt",encoding="UTF-8")
