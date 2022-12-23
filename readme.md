@@ -23,6 +23,7 @@ python corpus_splitter_v2.py
 ```
 
 Si vous utilisez les CRFs, d'autres fichiers seront générés automatiquement par le script de CRF, ceux-ci devraient s'autogérer.
+
 ## CRF
 
 ### Entrainement
@@ -47,22 +48,34 @@ Le script
 
 ### Prédiction sur le corpus
 
-Un script alternatif fait spécifiquement pour la structure JSON de la tâche est executable par
+Un script alternatif fait spécifiquement pour la structure JSON de la tâche est disponible.
+Pour l'exécuter sur un seul fichier :
 ```sh
-python L-NER_CRF.py -f mon_fichier_de_corpus.json
+python L-NER_CRF.py --f mon_fichier_de_corpus.json
 ```
-pour cibler un fichier spécifique, ou par
+ou
 ```sh
-python L-NER_CRF.py -d chemin/vers/corpus
+python L-NER_CRF.py --file mon_fichier_de_corpus.json
 ```
-pour cibler tout un répertoire.
-Plusieurs `-f` et `-d` peuvent être mis dans un même lancement de script, y compris conjointement.
+
+
+Pour l'exécuter sur un dossier complet :
+```sh
+python L-NER_CRF.py --d chemin/vers/corpus
+```
+ou
+```sh
+python L-NER_CRF.py --directory chemin/vers/corpus
+```
+Plusieurs `--f` et `--d` peuvent être mis dans un même lancement de script, y compris conjointement.
 
 Ce script réutilise des fonctions présentes dans `L-NER_CRF_train.py`.
-En sortie, sont générés automatiquement un fichier `*_output.json` pour chaque fichier traité, avec les nouvelles annotations ajoutées.
+En sortie, est généré automatiquement un fichier `*_OUTPUT.json` pour chaque fichier traité, avec les nouvelles annotations ajoutées.
 
 
-## Regex
+## Regex (ancienne méthode)
+
+/!\ POUR LES REGEX UTILISEES EN POST-TRAITEMENT DE CRF, REFEREZ VOUS À LA FONCTION `post_traitement` DE `L_NER_CRF_train.py` /!\
 
 Avant de pouvoir utiliser l'outil de tests de regex, il est conseillé de placer les fichiers originaux de corpus dans un répertoire `data` et  d'utiliser le parser `parser1.py` qui créera des fichiers CSV pour faciliter la tâche.
 Pour tester les regex, il faut lancer `main.py` ; celui-ci récupère les motifs présents dans `regex_config.json` et les teste sur les ensembles de données spécifiés dans ce même fichier.
