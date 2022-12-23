@@ -25,12 +25,15 @@ python corpus_splitter_v2.py
 Si vous utilisez les CRFs, d'autres fichiers seront générés automatiquement par le script de CRF, ceux-ci devraient s'autogérer.
 ## CRF
 
-La version la plus évoluée du système CRF que nous avons est exécutable par
-```py
-python test_CF3.py
+### Entrainement
+
+Le script pour entrainer un CRF est exécutable par
+```sh
+python L-NER_CRF_train.py
 ```
-Ce script se base sur `default_CRF_config.json` pour sa configuration.
-Vous pouvez principalement renseigner :
+Ce script se base sur `L-NER_CRF_default_config.json` pour sa configuration.
+Vous pouvez spécifier une configuration alternative en modifiant `config_path`.
+Dans un fichier de configuration, vous pouvez principalement renseigner :
 - quelles _features_ prendre en considération (`relevant_features`, `irrelevant_features`)
 - quel empan prendre en considération (`look_behind`, `look_ahead`)
 - quel nom donner au système
@@ -41,6 +44,23 @@ Le script
 - calcule sa performance sur l'ensemble DEV selon différentes métriques (précision, rappel, F1, perfect/relaxed match)
 - génère un fichier de configuration système avec un nom similaire à celui que vous avez donné au système (`*_config.json`) ; cela permet de recharger exactement les bons paramètres si vous souhaitez recharger le système (par défaut, si vous laissez le nom de fichier du modèle dans le fichier de configuration, le script le rechargera tel qu'il a été sauvegardé).
 - garde une trace des prédictions réalisées dans `latest_results.csv` (à la condition d'avoir la _feature_ 'text' sélectionnée) si jamais l'on souhaite comparer en détails ce qui a été prédit ce qui aurait dû l'être.
+
+### Prédiction sur le corpus
+
+Un script alternatif fait spécifiquement pour la structure JSON de la tâche est executable par
+```sh
+python L-NER_CRF.py -f mon_fichier_de_corpus.json
+```
+pour cibler un fichier spécifique, ou par
+```sh
+python L-NER_CRF.py -d chemin/vers/corpus
+```
+pour cibler tout un répertoire.
+Plusieurs `-f` et `-d` peuvent être mis dans un même lancement de script, y compris conjointement.
+
+Ce script réutilise des fonctions présentes dans `L-NER_CRF_train.py`.
+En sortie, sont générés automatiquement un fichier `*_output.json` pour chaque fichier traité, avec les nouvelles annotations ajoutées.
+
 
 ## Regex
 
