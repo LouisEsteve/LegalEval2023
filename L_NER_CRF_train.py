@@ -2,6 +2,19 @@
 AUTHOR		:	UNIVERSITY OF ORLEANS (FRANCE)
 TASK		:	LEGALEVAL2023
 SUB-TASK	:	L-NER
+***************************************************************
+FUNCTIONS DEFINED IN THIS SCRIPT
+- IOB_correcter
+- IOB2_transformer
+- IOBES_transformer
+- seqeval_report
+- prepare_model
+- generate_features
+- features_and_values_for_CRF
+- train
+- levenshtein_distance
+- post_traitement
+- estimate_performance_on_dev
 """
 
 import time
