@@ -11,3 +11,5 @@ NER_DEV/*
 *.feather
 *.pt
 L_NER_old_not_kept/*
+*~
+*.pyc
