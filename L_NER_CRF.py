@@ -2,6 +2,12 @@
 AUTHOR		:	UNIVERSITY OF ORLEANS (FRANCE)
 TASK		:	LEGALEVAL2023
 SUB-TASK	:	L-NER
+***************************************************************
+FUNCTIONS DEFINED IN THIS SCRIPT
+- generate_features_from_SpaCy_doc
+- features_for_CRF_from_SpaCy_doc
+- post_processing_from_raw_offsets
+- levenshtein_distance
 """
 
 import time
@@ -20,7 +26,7 @@ from seqeval.metrics.sequence_labeling import classification_report as seqeval_c
 from seqeval.scheme import IOB2, IOBES
 import json
 
-from L_NER_CRF_train import post_traitement, IOB2_transformer, IOBES_transformer
+from L_NER_CRF_train import IOB2_transformer, IOBES_transformer
 
 ########################################
 
@@ -136,18 +142,7 @@ def features_for_CRF_from_SpaCy_doc(
 	look_behind	=	config["look_behind"]
 	look_ahead	=	config["look_ahead"]
 	len_X_features	=	len(X_features)
-	for j in range(len_X_features):
-		"""
-		for k in range(j-look_behind,j+look_ahead+1):
-			if k < 0 or k >= len_X_features or k == j:
-				continue
-			prefix	=	f"{'+' if k > j else ''}{k-j}:"
-			for m in X_features[k]:
-				if m[0] in ['-','+']:
-					continue
-				X_features[j][f"{prefix}{m}"]	=	X_features[k][m]
-		"""
-		
+	for j in range(len_X_features):	
 		for k in range(-look_behind,look_ahead+1):
 			if k == 0 or j+k < 0 or j+k >= len_X_features:
 				continue
@@ -164,9 +159,7 @@ def features_for_CRF_from_SpaCy_doc(
 
 
 def post_processing_from_raw_offsets(
-		raw_texts		:	list,
-		# X_features		:	list,
-		# prediction		:	list,
+		raw_texts		    :	list,
 		enable_cities_query	:	bool	=	False,
 		enable_DATE_regex	:	bool	=	False,
 		enable_ORG_regex	:	bool	=	False
@@ -174,9 +167,12 @@ def post_processing_from_raw_offsets(
 	'''
 	This function takes the features and predictions, and returns the predictions once post-processing has been done.
 	
-	def post_traitement(
-			X_features	:	list,
-			prediction	:	list
+	
+	def post_processing_from_raw_offsets(
+			raw_texts		    :	list,
+			enable_cities_query	:	bool	=	False,
+			enable_DATE_regex	:	bool	=	False,
+			enable_ORG_regex	:	bool	=	False
 		) -> list:
 	'''
 	#<POST_TRAITEMENT>
@@ -194,22 +190,6 @@ def post_processing_from_raw_offsets(
 			cities_df['city']	=	cities_df['city'].str.lower()
 			cities_df['state']	=	cities_df['state'].str.lower()
 			cities_and_states	=	cities_df['city'].tolist() + cities_df['state'].tolist()
-			"""
-			for i in range(len(X_features)):
-				max_j	=	len(X_features[i])
-				for j in range(max_j):
-					if prediction[i][j] != 'O':
-						continue
-					if 'text' not in X_features[i][j] or len(X_features[i][j]['text']) < 6:
-						continue
-					if j == 0 or 'text' not in X_features[i][j-1] or X_features[i][j-1]['text'].lower() != X_features[i][j-1]:
-						continue
-					local_lower	=	X_features[i][j]['text'].lower()
-					for k in cities_and_states:
-						if local_lower in k:
-							prediction[i][j]	=	'I-GPE'
-							break
-			"""
 			
 			for i in range(len(raw_texts)):
 				# i	=	i.lower()
@@ -220,7 +200,6 @@ def post_processing_from_raw_offsets(
 					local_find	=	i_lower.find(j)
 					if local_find >= 0:
 						output_annotations[i]['GPE'].append((local_find,local_find+len(j)))
-	# prediction	=	IOB_correcter(prediction)
 	
 	
 	
@@ -487,15 +466,6 @@ def main() -> int:
 		
 		print('\nPrediction:')
 		prediction_full	=	CRF_model.predict(X_features_full)
-		"""
-		prediction_full	=	post_traitement(
-			X_features		=	X_features_full,
-			prediction		=	prediction_full,
-			enable_cities_query	=	"enable_cities_query" in config and config["enable_cities_query"],
-			enable_DATE_regex	=	"enable_DATE_regex" in config and config["enable_DATE_regex"],
-			enable_ORG_regex	=	"enable_ORG_regex" in config and config["enable_ORG_regex"]
-		)
-		"""
 		
 		occupied_offsets	=	{}
 		
