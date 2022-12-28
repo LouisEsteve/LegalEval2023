@@ -8,7 +8,8 @@ Nous avons pour objectif ici de participer aux tâches RR et L-NER de la campagn
 
 # L-NER
 
-Version Python utilisée : `3.10.1`
+Version Python recommandée : `3.10.9`
+Veuillez noter qu'il n'est pas possible d'utiliser Python `3.11.0` et au-delà du fait que `pycrfsuite`, utilisé par `sklearn_crfsuite`, n'est plus compatible à partir de cette version.
 
 ## Guide d'utilisation & préparation des données
 
