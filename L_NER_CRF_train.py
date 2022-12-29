@@ -47,8 +47,8 @@ config				=	None
 
 anti_whitespace_regex		=	re.compile('\\S')
 
-date_regex			=	re.compile('((0?\\d|[12]\\d|3[01])(?P<SEP1>\\D)(0?\\d|1[012])(?P=SEP1)(18|19|20)\\d{2})|((0?\\d|1[012])(?P<SEP2>\\D)(0?\\d|[12]\\d|3[01])(?P=SEP2)(18|19|20)\\d{2})|((18|19|20)\\d{2}(?P<SEP3>\\D)(0?\\d|[12]\\d|3[01])(?P=SEP3)(0?\\d|1[012]))|((18|19|20)\\d{2})(?P<SEP4>\\D)(0?\\d|1[012])(?P=SEP4)(0?\\d|[12]\\d|3[01])')
-org_regex			=	re.compile('[A-Z]{3,}')
+# date_regex			=	re.compile('(?i)(?P<DD_MM_YYYY>(0?\\d|[12]\\d|3[01])(?P<SEP1>\\D)(0?\\d|1[012])(?P=SEP1)(18|19|20)\\d{2})|(?P<MM_DD_YYYY>(0?\\d|1[012])(?P<SEP2>\\D)(0?\\d|[12]\\d|3[01])(?P=SEP2)(18|19|20)\\d{2})|(?P<YYYY_DD_MM>(18|19|20)\\d{2}(?P<SEP3>\\D)(0?\\d|[12]\\d|3[01])(?P=SEP3)(0?\\d|1[012]))|(?P<YYYY_MM_DD>(18|19|20)\\d{2})(?P<SEP4>\\D)(0?\\d|1[012])(?P=SEP4)(0?\\d|[12]\\d|3[01])|(?P<DDth_MONTH_YYYY>(0?\\d|[12]\\d|3[01])\\s*(st|nd|rd|th)?\\s*(jan(\\.|uary)|feb(\\.|ruary)|mar(.|ch)|apr.(\\.|il)|may|jun(\\.|e)|jul(\\.|y)|aug(\\.|ust)|sep(\\.|tember)|oct(\\.|ober)|nov(\\.|ember)|dec(\\.|ember))(\\s*(18|19|20)\\d{2})?)')
+# org_regex			=	re.compile('[A-Z]{3,}')
 
 CRF_model			=	None
 annot_df			=	None
@@ -676,27 +676,35 @@ def post_traitement(
 	
 	# if "enable_DATE_regex" in config and config["enable_DATE_regex"]:
 	if enable_DATE_regex:
-		for i in range(len(X_features)):
-			max_j	=	len(X_features[i])
-			# for j in range(len(X_features[i])):
-			for j in range(max_j):
-				if 'text' not in X_features[i][j]:
-					continue
-				if date_regex.fullmatch(X_features[i][j]['text'].strip()):
-					prediction[i][j]	=	'B-DATE'
+		if "DATE_regex_pattern" in config:
+			date_regex	=	re.compile(config["DATE_regex_pattern"])
+			for i in range(len(X_features)):
+				max_j	=	len(X_features[i])
+				# for j in range(len(X_features[i])):
+				for j in range(max_j):
+					if 'text' not in X_features[i][j]:
+						continue
+					if date_regex.fullmatch(X_features[i][j]['text'].strip()):
+						prediction[i][j]	=	'B-DATE'
+		else:
+			print("Could not find \"DATE_regex_pattern\" in config file, or it is not of type str.")
 	
 	# if "enable_ORG_regex" in config and config["enable_ORG_regex"]:
 	if enable_ORG_regex:
-		for i in range(len(X_features)):
-			max_j	=	len(X_features[i])
-			# for j in range(len(X_features[i])):
-			for j in range(max_j):
-				if 'text' not in X_features[i][j]:
-					continue
-				if prediction[i][j] != 'O':
-					continue
-				if org_regex.fullmatch(X_features[i][j]['text'].strip()):
-					prediction[i][j]	=	'B-ORG'
+		if "ORG_regex_pattern" in config:
+			org_regex	=	re.compile(config["ORG_regex_pattern"])
+			for i in range(len(X_features)):
+				max_j	=	len(X_features[i])
+				# for j in range(len(X_features[i])):
+				for j in range(max_j):
+					if 'text' not in X_features[i][j]:
+						continue
+					if prediction[i][j] != 'O':
+						continue
+					if org_regex.fullmatch(X_features[i][j]['text'].strip()):
+						prediction[i][j]	=	'B-ORG'
+		else:
+			print("Could not find \"ORG_regex_pattern\" in config file, or it is not of type str.")
 	
 	'''
 	# low

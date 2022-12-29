@@ -44,8 +44,8 @@ spacy_docs			=	[]
 
 anti_whitespace_regex		=	re.compile('\\S')
 
-date_regex			=	re.compile('((0?\\d|[12]\\d|3[01])(?P<SEP1>\\D)(0?\\d|1[012])(?P=SEP1)(18|19|20)\\d{2})|((0?\\d|1[012])(?P<SEP2>\\D)(0?\\d|[12]\\d|3[01])(?P=SEP2)(18|19|20)\\d{2})|((18|19|20)\\d{2}(?P<SEP3>\\D)(0?\\d|[12]\\d|3[01])(?P=SEP3)(0?\\d|1[012]))|((18|19|20)\\d{2})(?P<SEP4>\\D)(0?\\d|1[012])(?P=SEP4)(0?\\d|[12]\\d|3[01])')
-org_regex			=	re.compile('[A-Z]{3,}')
+# date_regex			=	re.compile('(?i)(?P<DD_MM_YYYY>(0?\\d|[12]\\d|3[01])(?P<SEP1>\\D)(0?\\d|1[012])(?P=SEP1)(18|19|20)\\d{2})|(?P<MM_DD_YYYY>(0?\\d|1[012])(?P<SEP2>\\D)(0?\\d|[12]\\d|3[01])(?P=SEP2)(18|19|20)\\d{2})|(?P<YYYY_DD_MM>(18|19|20)\\d{2}(?P<SEP3>\\D)(0?\\d|[12]\\d|3[01])(?P=SEP3)(0?\\d|1[012]))|(?P<YYYY_MM_DD>(18|19|20)\\d{2})(?P<SEP4>\\D)(0?\\d|1[012])(?P=SEP4)(0?\\d|[12]\\d|3[01])|(?P<DDth_MONTH_YYYY>(0?\\d|[12]\\d|3[01])\\s*(st|nd|rd|th)?\\s*(jan(\\.|uary)|feb(\\.|ruary)|mar(.|ch)|apr.(\\.|il)|may|jun(\\.|e)|jul(\\.|y)|aug(\\.|ust)|sep(\\.|tember)|oct(\\.|ober)|nov(\\.|ember)|dec(\\.|ember))(\\s*(18|19|20)\\d{2})?)')
+# org_regex			=	re.compile('[A-Z]{3,}')
 
 CRF_model			=	None
 annot_df			=	None
@@ -116,7 +116,8 @@ def features_for_CRF_from_SpaCy_doc(
 		new_X_features	=	[]
 		new_X_offsets	=	[]
 		
-		for j in range(len(X_features)):
+		# for j in range(len(X_features)):
+		for j in range(len_X_features):
 			appending	=	True
 			for i in config["drop_rows_if_true"]:
 				if i in X_features[j] and X_features[j][i] == True:
@@ -133,15 +134,18 @@ def features_for_CRF_from_SpaCy_doc(
 	
 	if __debug__:
 		assert len(X_features) == len(X_offsets)
+		
+	len_X_features	=	len(X_features)
 	
 	for i in config["irrelevant_features"]:
-		for j in range(len(X_features)):
+		# for j in range(len(X_features)):
+		for j in range(len_X_features):
 			if i in X_features[j]:
 				X_features[j].pop(i)
 	
 	look_behind	=	config["look_behind"]
 	look_ahead	=	config["look_ahead"]
-	len_X_features	=	len(X_features)
+	# len_X_features	=	len(X_features)
 	for j in range(len_X_features):	
 		for k in range(-look_behind,look_ahead+1):
 			if k == 0 or j+k < 0 or j+k >= len_X_features:
@@ -159,7 +163,7 @@ def features_for_CRF_from_SpaCy_doc(
 
 
 def post_processing_from_raw_offsets(
-		raw_texts		    :	list,
+		raw_texts		:	list,
 		enable_cities_query	:	bool	=	False,
 		enable_DATE_regex	:	bool	=	False,
 		enable_ORG_regex	:	bool	=	False
@@ -205,20 +209,28 @@ def post_processing_from_raw_offsets(
 	
 	# if "enable_DATE_regex" in config and config["enable_DATE_regex"]:
 	if enable_DATE_regex:
-		for i in range(len(raw_texts)):
-			if 'DATE' not in output_annotations[i]:
-				output_annotations[i]['DATE']	=	[]
-			for j in date_regex.finditer(raw_texts[i]):
-				output_annotations[i]['DATE'].append((j.start(),j.end()))
+		if "DATE_regex_pattern" in config:
+			date_regex	=	re.compile(config["DATE_regex_pattern"])
+			for i in range(len(raw_texts)):
+				if 'DATE' not in output_annotations[i]:
+					output_annotations[i]['DATE']	=	[]
+				for j in date_regex.finditer(raw_texts[i]):
+					output_annotations[i]['DATE'].append((j.start(),j.end()))
+		else:
+			print("Could not find \"DATE_regex_pattern\" in config file, or it is not of type str.")
 		
 	
 	# if "enable_ORG_regex" in config and config["enable_ORG_regex"]:
 	if enable_ORG_regex:
-		for i in range(len(raw_texts)):
-			if 'ORG' not in output_annotations[i]:
-				output_annotations[i]['ORG']	=	[]
-			for j in org_regex.finditer(raw_texts[i]):
-				output_annotations[i]['ORG'].append((j.start(),j.end()))
+		if "ORG_regex_pattern" in config:
+			org_regex	=	re.compile(config["ORG_regex_pattern"])
+			for i in range(len(raw_texts)):
+				if 'ORG' not in output_annotations[i]:
+					output_annotations[i]['ORG']	=	[]
+				for j in org_regex.finditer(raw_texts[i]):
+					output_annotations[i]['ORG'].append((j.start(),j.end()))
+		else:
+			print("Could not find \"ORG_regex_pattern\" in config file, or it is not of type str.")
 	
 	'''
 	# low
