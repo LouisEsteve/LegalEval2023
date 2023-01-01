@@ -1,0 +1,21 @@
+{
+	"result_path": "../latest_results.csv",
+	"result_encoding": "UTF-8",
+	"result_separator": "\t",
+	"result_dtype": {
+		"id": "Int32",
+		"text_id": "string",
+		"id_in_text": "Int32",
+		"offset_start": "Int32",
+		"offset_end": "Int32",
+		"y_value": "category",
+		"y_predict": "category",
+		"X_text": "string"
+	},
+	"result_index_col": "id",
+	"mode": "strict",
+	"remove_IOB": true,
+	"IOBES": false,
+	"ignore_default_for_overlapping_classes": true,
+	"display_max": 20
+}
