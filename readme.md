@@ -19,7 +19,7 @@ Afin de préparer les données :
 ```sh
 python parser1.py
 ```
-- pour séparer en TRAIN/DEV (pour l'entrainement des CRFs), lancez ensuite `corpus_splitter_v2.py`
+- si vous n'avez pas de DEV à votre disposition, pour séparer en TRAIN/DEV (pour l'entrainement des CRFs), lancez ensuite `corpus_splitter_v2.py`
 ```sh
 python corpus_splitter_v2.py
 ```
@@ -43,7 +43,7 @@ Dans un fichier de configuration, vous pouvez principalement renseigner :
 - les différents paramètres de la librairie **sklearn--crfsuite**
 
 Le script
-- entraine un système (si `training = True`)
+- entraine un système (si `training == True`)
 - calcule sa performance sur l'ensemble DEV selon différentes métriques (précision, rappel, F1, perfect/relaxed match)
 - génère un fichier de configuration système avec un nom similaire à celui que vous avez donné au système (`*_config.json`) ; cela permet de recharger exactement les bons paramètres si vous souhaitez recharger le système (par défaut, si vous laissez le nom de fichier du modèle dans le fichier de configuration, le script le rechargera tel qu'il a été sauvegardé).
 - garde une trace des prédictions réalisées dans `latest_results.csv` (à la condition d'avoir la _feature_ 'text' sélectionnée) si jamais l'on souhaite comparer en détails ce qui a été prédit ce qui aurait dû l'être.
