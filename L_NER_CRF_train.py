@@ -681,6 +681,8 @@ def post_traitement(
 				for j in range(max_j):
 					if 'text' not in X_features[i][j]:
 						continue
+					if prediction[i][j] != 'O':
+						continue
 					if date_regex.fullmatch(X_features[i][j]['text'].strip()):
 						prediction[i][j]	=	'B-DATE'
 		else:
@@ -1167,7 +1169,7 @@ def main() -> int:
 		config_file.close()
 	except IOError or OSError as e:
 		print(e)
-		print(f'Could not start script without configuration file, exitting')
+		print(f'Could not start script without configuration file, exiting')
 		exit()
 	print(f'Loaded configuration from file {config_path}')
 	
