@@ -34,8 +34,9 @@ from seqeval.scheme import IOB2, IOBES
 
 ########################################
 
-config_path		=	'L_NER_CRF_default_config.json'
-# config_path		=	'CRF_MULTI95_CRF3_config.json'
+# config_path		=	'L_NER_CRF_default_config.json'
+# config_path		=	'L_NER_CRF_model_103_MERGED.json'
+config_path		=	'L_NER_CRF_model_104_MERGED_config.json'
 
 # https://readthedocs.org/projects/sklearn-crfsuite/downloads/pdf/latest/
 
@@ -1162,6 +1163,16 @@ def print_state_features(state_features):
 		print("%0.6f %-8s %s" % (weight, label, attr))
 
 def main() -> int:
+	'''
+	C-like equivalent of the main function.
+	Output :
+		0 -> no error
+		1 -> error
+
+	def main() -> int:
+		[...]
+	'''
+	###
 	global config
 	try:
 		config_file	=	open(config_path,'rt',encoding='UTF-8')
@@ -1170,7 +1181,7 @@ def main() -> int:
 	except IOError or OSError as e:
 		print(e)
 		print(f'Could not start script without configuration file, exiting')
-		exit()
+		return 1
 	print(f'Loaded configuration from file {config_path}')
 	
 	

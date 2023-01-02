@@ -69,7 +69,6 @@ def generate_features_from_SpaCy_doc(
 	X_features	=	[]
 	X_offsets	=	[]
 	
-	# for j in doc:
 	for j in input_doc:
 		if anti_whitespace_regex.search(j.text) == None:
 			continue
@@ -100,20 +99,16 @@ def features_for_CRF_from_SpaCy_doc(
 	'''
 	########
 	
-	# X_features, X_offsets	=	generate_features_from_str(input_str)
 	X_features, X_offsets	=	generate_features_from_SpaCy_doc(input_doc)
 	if __debug__:
 		assert len(X_features) == len(X_offsets)
 	
 	if "drop_rows_if_true" in config:
-		# len_df	=	len(features_df)
-		
 		len_X_features	=	len(X_features)
 		
 		new_X_features	=	[]
 		new_X_offsets	=	[]
 		
-		# for j in range(len(X_features)):
 		for j in range(len_X_features):
 			appending	=	True
 			for i in config["drop_rows_if_true"]:
@@ -135,14 +130,12 @@ def features_for_CRF_from_SpaCy_doc(
 	len_X_features	=	len(X_features)
 	
 	for i in config["irrelevant_features"]:
-		# for j in range(len(X_features)):
 		for j in range(len_X_features):
 			if i in X_features[j]:
 				X_features[j].pop(i)
 	
 	look_behind	=	config["look_behind"]
 	look_ahead	=	config["look_ahead"]
-	# len_X_features	=	len(X_features)
 	for j in range(len_X_features):	
 		for k in range(-look_behind,look_ahead+1):
 			if k == 0 or j+k < 0 or j+k >= len_X_features:
@@ -176,11 +169,9 @@ def post_processing_from_raw_offsets(
 			enable_ORG_regex	:	bool	=	False
 		) -> list:
 	'''
-	#<POST_TRAITEMENT>
 	
 	output_annotations	=	[{} for i in raw_texts]
 	
-	# if "enable_cities_query" in config and config["enable_cities_query"]:
 	if enable_cities_query:
 		try:
 			cities_df		=	pd.read_csv('cities.csv' if "cities_path" not in config else config["cities_path"],sep='\t',encoding='UTF-8')
@@ -204,7 +195,6 @@ def post_processing_from_raw_offsets(
 	
 	
 	
-	# if "enable_DATE_regex" in config and config["enable_DATE_regex"]:
 	if enable_DATE_regex:
 		if "DATE_regex_pattern" in config:
 			date_regex	=	re.compile(config["DATE_regex_pattern"])
@@ -217,7 +207,6 @@ def post_processing_from_raw_offsets(
 			print("Could not find \"DATE_regex_pattern\" in config file, or it is not of type str.")
 		
 	
-	# if "enable_ORG_regex" in config and config["enable_ORG_regex"]:
 	if enable_ORG_regex:
 		if "ORG_regex_pattern" in config:
 			org_regex	=	re.compile(config["ORG_regex_pattern"])
@@ -351,12 +340,26 @@ def print_state_features(state_features):
 		print("%0.6f %-8s %s" % (weight, label, attr))
 
 def main() -> int:
+	'''
+	C-like equivalent of the main function.
+	Output :
+		0 -> no error
+		1 -> error
+
+	def main() -> int:
+		[...]
+	'''
+	###
+	
+	########
+	# Read content from files given in command line
+	########
+	
 	corpus_objects	=	{}
 	
 	i	=	0
 	i_limit	=	len(sys.argv)
 	while i < i_limit:
-		# if sys.argv[i] == "-f":
 		if sys.argv[i] == "--f" or sys.argv[i] == "--file":
 			i	+=	1
 			if sys.argv[i].endswith('.json'):
@@ -372,7 +375,6 @@ def main() -> int:
 			else:
 				print(f"Given file ({sys.argv[i]}) is not a JSON file. Exiting.")
 				exit()
-		# elif sys.argv[i] == "-d":
 		elif sys.argv[i] == "--d" or sys.argv[i] == "--directory":
 			i	+=	1
 			ld	=	listdir(sys.argv[i])
@@ -394,16 +396,20 @@ def main() -> int:
 	for i in corpus_objects:
 		print(i)
 	
+	########
+	# Load configuration file that's necessary for the model
+	########
+	
 	global config
 	try:
 		config_file	=	open(config_path,'rt',encoding='UTF-8')
 		config		=	json.load(config_file)
 		config_file.close()
+		print(f'Loaded configuration from file {config_path}')
 	except IOError or OSError as e:
 		print(e)
 		print(f'Could not start script without configuration file. Exiting.')
-		exit()
-	print(f'Loaded configuration from file {config_path}')
+		return 1
 	
 	global CRF_model
 	# prepare_model()
@@ -415,6 +421,11 @@ def main() -> int:
 		print(e)
 		print(f'Could not load model from {config["model_path"]}, see message above. Exiting.')
 		return 1
+	
+	
+	########
+	# For each file given as input, process it and generate an output
+	########
 	
 	global spacy_docs
 	global doc_index
@@ -430,38 +441,36 @@ def main() -> int:
 		doc_index	=	0
 		text_list	=	[]
 		id_list		=	[]
-		# text_dict	=	{}
 		for j in corpus_objects[i]:
 			text_list.append(j["data"]["text"])
 			id_list.append(j["id"])
-			# text_dict[j["id"]]	=	j["data"]["text"]
-		# annotation_docs	=	[]
 		annotation_docs	=	{}
 		len_text_list	=	len(text_list)
 		print('SpaCy processing:')
 		for doc in nlp.pipe(text_list):
 			print(f'File {file_count}/{n_files} ({i}); text {doc_index+1}/{len_text_list} ({id_list[doc_index]})',end='\r')
-			# annotation_docs.append(doc)
 			annotation_docs[id_list[doc_index]]	=	doc
 			doc_index	+=	1
-		# doc_index	=	0
+		
 		###########################
 		
 		X_features_full	=	[]
 		X_offsets_full	=	[]
 		
-		len_i	=	len(corpus_objects[i])
-		j_count	=	1
+		len_i		=	len(corpus_objects[i])
+		j_count		=	1
+		
+		########
+		# Generate the features, which will then be loaded into the CRF
+		########
 		
 		print('\nFeature generation:')
 		for j in corpus_objects[i]:
-			# print(f'{j_count:>6} / {len_i} ; id={j["id"]}',end="\r")
 			print(f'File {file_count}/{n_files} ({i}); text {j_count}/{len_i} ({j["id"]})',end='\r')
 			
 			j["annotations"]	=	[]
 			
-			text	=	j["data"]["text"]
-			# X_features, X_offsets	=	features_for_CRF_from_str(text)
+			text			=	j["data"]["text"]
 			X_features, X_offsets	=	features_for_CRF_from_SpaCy_doc(annotation_docs[j["id"]])
 			if __debug__:
 				assert len(X_features) == len(X_offsets)
@@ -469,18 +478,24 @@ def main() -> int:
 			X_features_full.append(X_features)
 			X_offsets_full.append(X_offsets)
 			
-			# prediction	=	CRF_model.predict([X_features])[0]
 			j_count	+=	1	#!
 		j_count	=	1
 		
+		########
+		# Make the predictions
+		########
+		
 		print('\nPrediction:')
 		prediction_full	=	CRF_model.predict(X_features_full)
+		
+		########
+		# Transform IOB2 annotations into raw offset annotations and place them into the JSON structure
+		########
 		
 		occupied_offsets	=	{}
 		
 		for j in corpus_objects[i]:
 			occupied_offsets[j["id"]]	=	[]
-			# print(f'{j_count:>6} / {len_i} ; id={j["id"]}',end="\r")
 			print(f'File {file_count}/{n_files} ({i}); text {j_count}/{len_i} ({j["id"]})',end='\r')
 			
 			result_obj	=	{
@@ -550,8 +565,9 @@ def main() -> int:
 			j["annotations"].append(result_obj)
 			j_count	+=	1
 		
-		
-		# POST_PROCESSING FROM RAW OFFSETS
+		########
+		# Launch post processing from raw offsets
+		########
 		
 		post_processing_annotations	=	post_processing_from_raw_offsets(
 			raw_texts		=	text_list,
@@ -562,9 +578,7 @@ def main() -> int:
 		post_processing_added_annotations_count	=	0
 		for j in range(len(post_processing_annotations)):
 			for k in post_processing_annotations[j]:
-				# for m in post_processing_annotations[j][k]:
 				for m in range(len(post_processing_annotations[j][k])):
-					# if post_processing_annotations[j][k][m] not in occupied_offsets[j]:
 					if post_processing_annotations[j][k][m] not in occupied_offsets[id_list[j]]:
 						start_index	=	post_processing_annotations[j][k][m][0]
 						end_index	=	post_processing_annotations[j][k][m][1]
@@ -584,10 +598,13 @@ def main() -> int:
 							"type"		:	"labels"
 						})
 						annot_count	+=	1
-						# occupied_offsets[j].append((start_index,end_index))
 						occupied_offsets[id_list[j]].append((start_index,end_index))
 						post_processing_added_annotations_count	+=	1
 		print(f'\nPost-processing added {post_processing_added_annotations_count} annotations')
+		
+		########
+		# Write the new file
+		########
 		
 		output_path	=	f"{i[:-5]}_OUTPUT.json"
 		try:
