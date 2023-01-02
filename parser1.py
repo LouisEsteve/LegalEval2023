@@ -26,10 +26,19 @@ carriage_return_replacement	=	'\\r'
 
 text_dict			=	{}
 
-def main():
-	files = listdir(data_path)
+def main() -> int:
+	'''
+	C-like equivalent of the main function.
+	Output :
+		0 -> no error
+		1 -> error
+
+	def main() -> int:
+		[...]
+	'''
+	###
+	files	=	listdir(data_path)
 	for i in files:
-		#if (not i.endswith('.json')) or (not i.startswith('RR')):
 		if not i.endswith('.json'):
 			continue
 		local_path = f'{data_path}/{i}'
@@ -61,35 +70,30 @@ def main():
 
 			j_count = 1
 			for j in json_object:
-				#local_sentences = sentence_regex.findall(j.data.text)
-				
 				print(f'Parsing text {j_count}/{len(json_object)}...', end='\r')
 				
-				text_id			=	j['id']			if j['id'] else hash(j['data']['text'])				#j.id
+				text_id			=	j['id']			if j['id'] else hash(j['data']['text'])			#j.id
 				
-				# if j['id'] not in text_dict:
 				if text_id not in text_dict:
-					# text_dict[j['id']] = j['data']['text']
 					text_dict[text_id]	=	j['data']['text']
 				
 				sum_for_average		+=	len(j['data']['text'])
 				count_for_average	+=	1
 				
-				text_group		=	j['meta']['group']	if 'group' in j['meta'].keys() else '_'			 #j.meta.group
-				text_source		=	j['meta']['source']	if 'source' in j['meta'].keys() else '_'			#j.meta.group
+				text_group		=	j['meta']['group']	if 'group' in j['meta'].keys() else '_'			#j.meta.group
+				text_source		=	j['meta']['source']	if 'source' in j['meta'].keys() else '_'		#j.meta.group
 
 				for q in range(len(j['annotations'])):
 					annotation_result_group	 =	q
 					
-					#for k in j['annotations'][0]['result']:
 					for k in j['annotations'][q]['result']:
-						annotation_id		=	k['id']																 #k.id
-						annotation_type		=	k['type']		if 'type' in k.keys() else '_'					  #k.type
-						annotation_to_name	=	k['to_name']		if 'to_name' in k.keys() else '_'					#k.to_name
-						annotation_from_name	=	k['from_name']		if 'from_name' in k.keys() else '_'				 #k.from_name
-						annotation_start	=	k['value']['start']													 #k.value.start
-						annotation_end		=	k['value']['end']														#k.value.end
-						annotation_text		=	k['value']['text']													  #k.value.text
+						annotation_id		=	k['id']								#k.id
+						annotation_type		=	k['type']		if 'type' in k.keys() else '_'		#k.type
+						annotation_to_name	=	k['to_name']		if 'to_name' in k.keys() else '_'	#k.to_name
+						annotation_from_name	=	k['from_name']		if 'from_name' in k.keys() else '_'	#k.from_name
+						annotation_start	=	k['value']['start']						#k.value.start
+						annotation_end		=	k['value']['end']						#k.value.end
+						annotation_text		=	k['value']['text']						#k.value.text
 
 						for m in k['value']['labels']:
 							annotation_label	=	m
