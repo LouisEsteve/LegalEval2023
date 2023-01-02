@@ -15,7 +15,7 @@ Veuillez noter qu'il n'est pas possible d'utiliser Python `3.11.0` et au-delà d
 ## Guide d'utilisation & préparation des données
 
 Afin de préparer les données :
-- après avoir mis les fichiers de corpus dans le répertoire `data`, lancer `parser1.py` pour transformer les données dans un format CSV
+- après avoir mis les fichiers de corpus dans le répertoire `data`, lancez `parser1.py` pour transformer les données dans un format CSV
 ```sh
 python parser1.py
 ```
