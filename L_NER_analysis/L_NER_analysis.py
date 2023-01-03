@@ -14,6 +14,9 @@ SUGGESTED RUNS:
 - confusion_matrix_based_on_full_annotations -> true
 - confusion_matrix_based_on_full_annotations -> false, remove_IOB -> true
 - confusion_matrix_based_on_full_annotations -> false, remove_IOB -> false
+
+About the last part, with underlined annotations appearing on the screen, in some cases it may appear that all cases have the same frontiers, it is not a bug, it's just that for some overlapping classes, the CRF doesn't have any issues with frontier detection.
+Cases in which different frontiers are present have been tested, and display appropriately on the screen.
 '''
 
 ##################################################
