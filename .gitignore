@@ -1,7 +1,6 @@
 data/*.csv
 venv*
 *.pl
-*.csv
 *CRF3_config.json
 __pychache__/*
 *.db
