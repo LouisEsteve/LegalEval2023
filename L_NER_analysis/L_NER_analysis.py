@@ -9,6 +9,13 @@ import matplotlib.colors as colors
 
 config_path	=	'L_NER_analysis_config.json'
 
+'''
+SUGGESTED RUNS:
+- confusion_matrix_based_on_full_annotations -> true
+- confusion_matrix_based_on_full_annotations -> false, remove_IOB -> true
+- confusion_matrix_based_on_full_annotations -> false, remove_IOB -> false
+'''
+
 ##################################################
 
 
@@ -38,7 +45,9 @@ def main() -> int:
 
 	##################################################
 	
+	########
 	# Reading the results
+	########
 	try:
 		df	=	pd.read_csv(
 			config["result_path"],
@@ -66,7 +75,7 @@ def main() -> int:
 		y_value.append(group['y_value'].to_list())
 		y_predict.append(group['y_predict'].to_list())
 		i_count	+=	1
-	print('') # linefeed
+	print(f'\n{"-"*64}')
 
 	########
 	# Make a classification report based on the pair of matrices we generated, and print it
@@ -81,6 +90,7 @@ def main() -> int:
 
 	df_results	=	pd.DataFrame.from_dict(cr_dict, orient='index')
 	print(df_results)
+	print(f'{"-"*64}')
 
 	########
 	# Make a plot for precision, recall, F1-score
@@ -95,13 +105,107 @@ def main() -> int:
 	plt.show()
 
 	########
-	# Make a confusion matrix based on the different classes, and then display it; it is strongly recommended to have "remove_IOB" set to true in the configuration file, mostly for readability of the plot
+	# Make a confusion matrix based on the different classes, and then display it; it is strongly recommended to have "remove_IOB" set to true in the configuration file if confusion_matrix_based_on_full_annotations is set to false, mostly for readability of the plot
+	# About confusion_matrix_based_on_full_annotations, if set to true, the classes considered most overlapping will be on the basis of entire annotations, and if set to false it will be on the basis of the number of tokens
+	# remove_IOB has no effect if confusion_matrix_based_on_full_annotations is set to true, as IOB will be removed whatever happens in this option
 	########
-	if config["remove_IOB"]:
+	df_ct	=	None
+	if config["confusion_matrix_based_on_full_annotations"]:
+		'''
+		This perspective can be understood as : any continuous area of the same categories is counted as one overlap.
+		For example:
+		
+		XXX XXXXX XXX XX XXXXXXX XXXX XX XXXXXX
+		          ^^^^^^^^^^^^^^^^^^^
+		     O             A             O
+		     
+		^^^^^^^^^^^^^            ^^^^^^^^^^^^^^
+		     B             O             C
+		
+		In such a configuration, would be counted, in order:
+		Overlap O/B
+		Overlap A/B
+		Overlap A/O
+		Overlap A/C
+		Overlap O/C
+		'''
+		local_dict	=	{}
+		n_text_id	=	len(df['text_id'].unique())
+		n		=	1
+		# This is the same code as the one in the other option, for removing IOB, but here it is not dependent of config["remove_IOB"] because it's better to do it whatever happens, as we're handling full annotations
 		df['y_value']	=	df['y_value'].apply(lambda x: x[2:] if x != 'O' else 'NONE')
 		df['y_predict']	=	df['y_predict'].apply(lambda x: x[2:] if x != 'O' else 'NONE')
+		for name, group in df.groupby('text_id'):
+			print(f'Matrix {n}/{n_text_id}; {name}',end='\r')
+			previous_y_value	=	'NONE'
+			previous_y_predict	=	'NONE'
+			for id, row in group.iterrows():
+				new_y_value	=	row['y_value']
+				new_y_predict	=	row['y_predict']
+				
+				'''
+				if new_y_value == 'O':
+					new_y_value	=	'NONE'
+				else:
+					new_y_value	=	new_y_value[2:]
+					
+				if new_y_predict == 'O':
+					new_y_predict	=	'NONE'
+				else:
+					new_y_predict	=	new_y_predict[2:]
+				'''
+				
+				if (new_y_value != previous_y_value) or (new_y_predict != previous_y_predict):
+					if new_y_predict not in local_dict:
+						local_dict[new_y_predict]	=	{}
+					if new_y_value not in local_dict[new_y_predict]:
+						local_dict[new_y_predict][new_y_value]	=	0
+					local_dict[new_y_predict][new_y_value]	+=	1
+				
+				previous_y_value	=	new_y_value
+				previous_y_predict	=	new_y_predict
+			n	+=	1
+		# df_ct	=	pd.DataFrame.from_dict(local_dict)
+		df_ct	=	pd.DataFrame.from_dict(local_dict,orient='index')
+	else:
+		'''
+		This perspective can be understood as : each token is individually considered as an overlap.
+		For example:
+		
+		(1) (2)   (3) (4)(5)     (6)  (7)(8)
+		XXX XXXXX XXX XX XXXXXXX XXXX XX XXXXXX
+		          ^^^^^^^^^^^^^^^^^^^
+		     O             A             O
+		     
+		^^^^^^^^^^^^^            ^^^^^^^^^^^^^^
+		     B             O             C
+		
+		In such a configuration, would be counted, in order:
+		Overlap O/B (1)
+		Overlap O/B (2)
+		Overlap A/B (3)
+		Overlap A/O (4)
+		Overlap A/O (5)
+		Overlap A/C (6)
+		Overlap O/C (7)
+		Overlap O/C (8)
+		'''
+		if config["remove_IOB"]:
+			df['y_value']	=	df['y_value'].apply(lambda x: x[2:] if x != 'O' else 'NONE')
+			df['y_predict']	=	df['y_predict'].apply(lambda x: x[2:] if x != 'O' else 'NONE')
 
-	df_ct	=	pd.crosstab(df['y_value'],df['y_predict'],rownames=['y_value'],colnames=['y_predict'])
+		df_ct	=	pd.crosstab(df['y_value'],df['y_predict'],rownames=['y_value'],colnames=['y_predict'])
+	
+	########
+	# Improving the dataframe before display
+	########
+	df_ct.fillna(0.0,inplace=True)
+	# df_ct.reindex(sorted(df_ct.columns))
+	df_ct			=	df_ct.reindex(sorted(df_ct.columns),axis=1)
+	df_ct.index.name	=	'y_predict'
+	df_ct.columns.name	=	'y_value'
+	# df_ct.sort_values(df_ct.index,inplace=True)
+	df_ct.sort_values(df_ct.index.name,inplace=True)
 	print(df_ct)
 
 	# These are the scaling options, I tested them and "symlog" seems to be the most interesting for display
@@ -138,7 +242,10 @@ def main() -> int:
 				max_cell_value	=	local_value
 				max_x		=	j
 				max_y		=	i
-	print(f'{max_cell_value} tokens individuels de {max_y} ont été annotées par {max_x} (MAXIMUM)')
+	if config["confusion_matrix_based_on_full_annotations"]:
+		print(f'{"-"*64}\n{max_cell_value} annotations de {max_y} ont été annotées (au moins partiellement) par {max_x} (MAXIMUM)\n{"-"*64}')
+	else:
+		print(f'{"-"*64}\n{max_cell_value} tokens individuels de {max_y} ont été annotées par {max_x} (MAXIMUM)\n{"-"*64}')
 
 	########
 	# Display examples, with indications of text_id, offsets, etc.
@@ -202,7 +309,9 @@ def main() -> int:
 	previous_y_value	=	'NONE'
 	previous_y_predict	=	'NONE'
 	for index, row in df.iterrows():
+		########
 		# Check if it's the y_value we're looking for
+		########
 		if row['y_value'] == max_y:
 			if row['y_value'] != previous_y_value:
 				series_y_values.append([])
@@ -213,7 +322,9 @@ def main() -> int:
 			})
 		previous_y_value	=	row['y_value']
 		
+		########
 		# Check if it's the y_predict we're looking for
+		########
 		if row['y_predict'] == max_x:
 			if row['y_predict'] != previous_y_predict:
 				series_y_predict.append([])
@@ -224,7 +335,9 @@ def main() -> int:
 			})
 		previous_y_predict	=	row['y_predict']
 		
+		########
 		# Check if we've reached the last row of a text; if so, calculate and display all the overlaps based on series_y_values and series_y_predict
+		########
 		if row['text_id'] != row['next_text_id']:
 			for i in series_y_values:
 				y_values_min	=	i[0]['offset_start']
@@ -268,6 +381,10 @@ def main() -> int:
 						print(display_str)
 						print("-"*74)
 						display_count	+=	1
+					if display_count >= config["display_max"]:
+						break
+				if display_count >= config["display_max"]:
+					break
 			series_y_values		=	[]
 			series_y_predict	=	[]
 			previous_y_value	=	'NONE'

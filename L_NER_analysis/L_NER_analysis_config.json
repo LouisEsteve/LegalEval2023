@@ -17,5 +17,6 @@
 	"remove_IOB": true,
 	"IOBES": false,
 	"ignore_default_for_overlapping_classes": true,
+	"confusion_matrix_based_on_full_annotations": true,
 	"display_max": 20
 }
