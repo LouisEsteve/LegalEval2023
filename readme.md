@@ -9,7 +9,7 @@ Nous avons pour objectif ici de participer aux tâches RR et L-NER de la campagn
 ## Vecteurs sémantiques
 
 
-Les données d'entraînement [RR_TRAIN_alt.csv](RR/Data/RR_TRAIN_alt.csv) et les données test [RR_DEV_alt.csv](RR/Data/RR_DEV_alt.csv) sont disponibles dans le fichier [Data](Data/).
+Les données d'entraînement [RR_TRAIN_alt.csv](RR/Data/RR_TRAIN_alt.csv) et les données test [RR_DEV_alt.csv](RR/Data/RR_DEV_alt.csv) sont disponibles dans le fichier [Data](RR/Data/).
 
 
 
