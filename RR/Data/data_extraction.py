@@ -1,5 +1,6 @@
 # LIBRAIRIES
 import os
+from pathlib import Path
 import sys
 import re
 
@@ -8,11 +9,12 @@ import json
 import pandas as pd
 
 # DATA
-CUR_DIR = os.path.dirname(os.path.realpath(sys.argv[0]))
-BASE_DIR = os.path.dirname(CUR_DIR)
-DATA_DIR = BASE_DIR + os.sep + "Data"
-files = [file for file in os.listdir(DATA_DIR)]
+CUR_DIR = Path(__file__).parent
+print(CUR_DIR)
+BASE_DIR = os.path.dirname(Path(__file__).parent)
+DATA_DIR = os.path.join(BASE_DIR, "Data")
 
+files = [file for file in os.listdir(DATA_DIR)]
 
 # CODE
 for file in files:
