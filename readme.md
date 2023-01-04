@@ -4,7 +4,11 @@ Nous avons pour objectif ici de participer aux tâches RR et L-NER de la campagn
 
 # RR
 
-[...]
+## Ngrams
+
+## Vecteurs
+
+## Classifieur
 
 # L-NER
 
