@@ -7,23 +7,35 @@ Nous avons pour objectif ici de participer aux tâches RR et L-NER de la campagn
 ## Vecteurs sémantiques
 
 ### Prérequis
-- `sent2vec>=0.3.0`
-- `pandas>=1.5.2` 
-- `numpy>=1.24.1` 
+- `sent2vec`
+- `pandas` 
+- `numpy` 
 
 ### Données d'entrée
-Les données d'entraînement [train.csv](RR/Data/train.csv) et les données test [dev.csv](RR/Data/dev.csv) sont disponsibles dans le dossier [Data](RR/Data). Le cas échéant, vous pouvez générer de nouveau les fichiers de données nécessaires à partir des fichiers brutes en exécutant le script [data_extraction.py](RR/Data/data_extraction.py).
+Les données d'entraînement [train.csv](RR/Data/train.csv) et les données test [dev.csv](RR/Data/dev.csv) sont disponsibles dans le dossier [Data](RR/Data).
+
+### Utilisation
+Le script [ngrams.py](RR/ngrams/ngrams.py) entraîne un système de n-grams en utilisant le fichier [train.csv](RR/Data/train.csv) comme donnée d'entrée. Une fois avoir appris les n-grams des données d'entrée, il fait des prédictions sur les données test [dev.csv](RR/Data/dev.csv). 
+A la sortie, un fichier avec les prédictions [dev_predictions.csv](RR/ngrams/dev_predictions.csv) et un rapport de classification [dev_classreport.csv](RR/ngrams/dev_classreport.csv) seront produits.
 
 
 ## Classifieur
 
 ### Prérequis
-- `SpaCy==3.2` (la version actuelle `3.4.4` peut ne pas être compatible avec le modèle `en_core_web_sm` deployé)  
+- `pickle5`
 - `sklearn`
 - `pandas`
+- `nltk`
+- `matplotlib`
+- `seaborn`
+- `numpy`
 
 ### Données d'entrée
-Les données d'entraînement [train.csv](RR/Data/train.csv) et les données test [dev.csv](RR/Data/dev.csv) sont disponsibles dans le dossier [Data](RR/Data). Le cas échéant, vous pouvez générer de nouveau les fichiers de données nécessaires à partir des fichiers brutes en exécutant le script [data_extraction.py](RR/Data/data_extraction.py).
+Les données d'entraînement [train.csv](RR/Data/train.csv) et les données test [dev.csv](RR/Data/dev.csv) sont disponsibles dans le dossier [Data](RR/Data).
+
+### Utilisation
+Le script [ngrams.py](RR/ngrams/ngrams.py) entraîne un système de n-grams en utilisant le fichier [train.csv](RR/Data/train.csv) comme donnée d'entrée. Une fois avoir appris les n-grams des données d'entrée, il fait des prédictions sur les données test [dev.csv](RR/Data/dev.csv). 
+A la sortie, un fichier avec les prédictions [dev_predictions.csv](RR/ngrams/dev_predictions.csv) et un rapport de classification [dev_classreport.csv](RR/ngrams/dev_classreport.csv) seront produits.
 
 ## N-grams
 
