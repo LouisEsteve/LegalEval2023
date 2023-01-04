@@ -6,9 +6,10 @@ Nous avons pour objectif ici de participer aux tâches RR et L-NER de la campagn
 
 ## Ngrams
 
-## Vecteurs
+## Vecteurs sémantiques
 
 ## Classifieur
+Les données d'entraînement sont rendues disponibles ici [RR_TRAIN_alt.csv](Data/RR_TRAIN_alt.csv) et [RR_DEV_alt.csv](Data/RR_DEV_alt.csv).
 
 # L-NER
 
