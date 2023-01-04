@@ -6,20 +6,24 @@ Nous avons pour objectif ici de participer aux tâches RR et L-NER de la campagn
 
 ## Vecteurs sémantiques
 
+### Prérequis
+- `sent2vec>=0.3.0`
+- `pandas>=1.5.2` 
+- `numpy>=1.24.1` 
+
 ### Données d'entrée
-Les données d'entraînement [RR_TRAIN_alt.csv](RR/Data/RR_TRAIN_alt.csv) et les données test [RR_DEV_alt.csv](RR/Data/RR_DEV_alt.csv) sont disponibles dans le fichier [Data](RR/Data/).
+Les données d'entraînement [train.csv](RR/Data/train.csv) et les données test [dev.csv](RR/Data/dev.csv) sont disponsibles dans le dossier [Data](RR/Data). Le cas échéant, vous pouvez générer de nouveau les fichiers de données nécessaires à partir des fichiers brutes en exécutant le script [data_extraction.py](RR/Data/data_extraction.py).
 
 
 ## Classifieur
 
+### Prérequis
+- `SpaCy==3.2` (la version actuelle `3.4.4` peut ne pas être compatible avec le modèle `en_core_web_sm` deployé)  
+- `sklearn`
+- `pandas`
+
 ### Données d'entrée
-Les données d'entraînement [RR_TRAIN_alt.csv](RR/Data/RR_TRAIN_alt.csv) et les données test [RR_DEV_alt.csv](RR/Data/RR_DEV_alt.csv) sont disponibles dans le fichier [Data](RR/Data/).
-### Script
-Le fichier
-```sh
-regression_logistique.py
-```
-permet d'exécuter le script 
+Les données d'entraînement [train.csv](RR/Data/train.csv) et les données test [dev.csv](RR/Data/dev.csv) sont disponsibles dans le dossier [Data](RR/Data). Le cas échéant, vous pouvez générer de nouveau les fichiers de données nécessaires à partir des fichiers brutes en exécutant le script [data_extraction.py](RR/Data/data_extraction.py).
 
 ## N-grams
 
@@ -30,7 +34,7 @@ permet d'exécuter le script
 -  `tqdm`
 
 ### Données d'entrée
-Les données d'entraînement [train.csv](RR/Data/train.csv) et les données test [dev.csv](RR/Data/dev.csv) sont disponsibles dans le fichier [Data](RR/Data). Le cas échéant, vous pouvez générer de nouveau les fichiers de données nécessaires à partir des fichiers brutes en exécutant le script [data_extraction.py](RR/Data/data_extraction.py).
+Les données d'entraînement [train.csv](RR/Data/train.csv) et les données test [dev.csv](RR/Data/dev.csv) sont disponsibles dans le dossier [Data](RR/Data). Le cas échéant, vous pouvez générer de nouveau les fichiers de données nécessaires à partir des fichiers brutes en exécutant le script [data_extraction.py](RR/Data/data_extraction.py).
 
 ### Utilisation
 Le script [ngrams.py](RR/ngrams/ngrams.py) entraîne un système de n-grams en utilisant le fichier [train.csv](RR/Data/train.csv) comme donnée d'entrée. Une fois avoir appris les n-grams des données d'entrée, il fait des prédictions sur les données test [dev.csv](RR/Data/dev.csv). 
