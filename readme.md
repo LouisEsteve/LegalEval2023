@@ -7,6 +7,9 @@ Nous avons pour objectif ici de participer aux tâches RR et L-NER de la campagn
 ## Ngrams
 
 ## Vecteurs sémantiques
+Les données d'entraînement sont disponibles en suivant ce lien [RR_TRAIN_alt.csv](RR/Data/RR_TRAIN_alt.csv) et les données test sont disponilbles en suivant ce lien [RR_DEV_alt.csv](RR/Data/RR_DEV_alt.csv). Dans le fichier (./RR)
+
+
 
 ## Classifieur
 Les données d'entraînement sont rendues disponibles ici [RR_TRAIN_alt.csv](RR/Data/RR_TRAIN_alt.csv) et [RR_DEV_alt.csv](RR/Data/RR_DEV_alt.csv).
