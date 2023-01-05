@@ -6,20 +6,34 @@ Nous avons pour objectif ici de participer aux tâches RR et L-NER de la campagn
 
 ## Vecteurs sémantiques
 
+### Prérequis
+- `sent2vec`
+- `pandas` 
+- `numpy` 
+
 ### Données d'entrée
-Les données d'entraînement [RR_TRAIN_alt.csv](RR/Data/RR_TRAIN_alt.csv) et les données test [RR_DEV_alt.csv](RR/Data/RR_DEV_alt.csv) sont disponibles dans le fichier [Data](RR/Data/).
+Les données d'entraînement [RR_TRAIN_alt.csv](RR/Data/RR_TRAIN_alt.csv) et les données test [RR_DEV_alt.csv](RR/Data/RR_DEV_alt.csv) sont disponsibles dans le dossier [Data](RR/Data). Ces deux fichiers ont été générés grâce au script [data_extraction.py](RR/Data/data_extraction.py).
+
+### Utilisation
 
 
 ## Classifieur
 
+### Prérequis
+- `pickle5`
+- `sklearn`
+- `pandas`
+- `nltk`
+- `matplotlib`
+- `seaborn`
+- `numpy`
+
 ### Données d'entrée
-Les données d'entraînement [RR_TRAIN_alt.csv](RR/Data/RR_TRAIN_alt.csv) et les données test [RR_DEV_alt.csv](RR/Data/RR_DEV_alt.csv) sont disponibles dans le fichier [Data](RR/Data/).
-### Script
-Le fichier
-```sh
-regression_logistique.py
-```
-permet d'exécuter le script 
+Les données d'entraînement [RR_TRAIN_alt.csv](RR/Data/RR_TRAIN_alt.csv) et les données test [RR_DEV_alt.csv](RR/Data/RR_DEV_alt.csv) sont disponsibles dans le dossier [Data](RR/Data). Ces deux fichiers ont été générés grâce au script [data_extraction.py](RR/Data/data_extraction.py).
+
+### Fonctionnement et utilisation
+Le script `regression_logistique.py` permet d'entraîner le modèle sur un jeu de données d'entraînement, puis de tester sur un jeu de données de test. Par défaut, le classifieur utilisé est `LogisticRegression` car c'est celui qui donne les meilleurs résultats. Le nombre de plis pour la validation croisée est paramétrée à 5.
+Des hyperparamètres ont été ajoutés et l'objet `GridSearchCV` permet de trouver la combinaison qui donne les meilleurs performances. Le meilleur modèle entraîné est enregistré dans un fichier au format `.plk`. Une fois le modèle entraîné, il est utilisé pour prédire les étiquettes du jeu de données de test. Enfin, le script affiche un rapport de classification et une matrice de confusion. A noter qu'une matrice de confusion est également enregistrée au format `.png` dans un fichier.
 
 ## N-grams
 
@@ -30,7 +44,7 @@ permet d'exécuter le script
 -  `tqdm`
 
 ### Données d'entrée
-Les données d'entraînement [train.csv](RR/Data/train.csv) et les données test [dev.csv](RR/Data/dev.csv) sont disponsibles dans le fichier [Data](RR/Data). Le cas échéant, vous pouvez générer de nouveau les fichiers de données nécessaires à partir des fichiers brutes en exécutant le script [data_extraction.py](RR/Data/data_extraction.py).
+Les données d'entraînement [train.csv](RR/Data/train.csv) et les données test [dev.csv](RR/Data/dev.csv) sont disponsibles dans le dossier [Data](RR/Data). Le cas échéant, vous pouvez générer de nouveau les fichiers de données nécessaires à partir des fichiers brutes en exécutant le script [data_extraction.py](RR/Data/data_extraction.py).
 
 ### Utilisation
 Le script [ngrams.py](RR/ngrams/ngrams.py) entraîne un système de n-grams en utilisant le fichier [train.csv](RR/Data/train.csv) comme donnée d'entrée. Une fois avoir appris les n-grams des données d'entrée, il fait des prédictions sur les données test [dev.csv](RR/Data/dev.csv). 
