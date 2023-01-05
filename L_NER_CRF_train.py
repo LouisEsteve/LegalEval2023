@@ -13,7 +13,7 @@ FUNCTIONS DEFINED IN THIS SCRIPT
 - features_and_values_for_CRF
 - train
 - levenshtein_distance
-- post_traitement
+- post_processing
 - estimate_performance_on_dev
 """
 
@@ -34,9 +34,12 @@ from seqeval.scheme import IOB2, IOBES
 
 ########################################
 
-# config_path		=	'L_NER_CRF_default_config.json'
+config_path		=	'L_NER_CRF_default_config.json'
 # config_path		=	'L_NER_CRF_model_103_MERGED.json'
-config_path		=	'L_NER_CRF_model_104_MERGED_config.json'
+# config_path		=	'L_NER_CRF_model_104_MERGED_config.json'
+# config_path		=	'L_NER_CRF_model_105_MERGED_config.json'
+# config_path		=	'L_NER_CRF_model_106_MERGED_config.json'
+# config_path		=	'L_NER_CRF_model_101_config.json'
 
 # https://readthedocs.org/projects/sklearn-crfsuite/downloads/pdf/latest/
 
@@ -549,6 +552,20 @@ def features_and_values_for_CRF(
 						j['text_root']	=	text_root
 					
 					###
+	
+	#<debug>
+	'''
+	# ensure no None value in dictionaries
+	for i in range(len(X_features)):
+		for j in range(len(X_features[i])):
+			keys	=	X_features[i][j]
+			for k in keys:
+				if X_features[i][j][k] == None:
+					X_features[i][j].pop(k)
+	'''
+	#</debug>
+	
+	
 	del(features_df)
 	return X_features, y_values, meta_info
 	
@@ -626,7 +643,7 @@ def levenshtein_distance(
 	e	=	levenshtein_distance(a[1:],b)
 	return 1 + min(c,d,e)
 
-def post_traitement(
+def post_processing(
 		X_features		:	list,
 		prediction		:	list,
 		enable_cities_query	:	bool	=	False,
@@ -636,7 +653,7 @@ def post_traitement(
 	'''
 	This function takes the features and predictions, and returns the predictions once post-processing has been done.
 	
-	def post_traitement(
+	def post_processing(
 			X_features	:	list,
 			prediction	:	list
 		) -> list:
@@ -820,7 +837,7 @@ def estimate_performance_on_dev():
 	
 	#<POST_TRAITEMENT>
 	
-	prediction	=	post_traitement(
+	prediction	=	post_processing(
 		X_features		=	X_features,
 		prediction		=	prediction,
 		enable_cities_query	=	"enable_cities_query" in config and config["enable_cities_query"],

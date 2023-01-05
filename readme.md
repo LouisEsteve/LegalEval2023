@@ -53,9 +53,22 @@ A la sortie, un fichier avec les prédictions [dev_predictions.csv](RR/ngrams/de
 
 # L-NER
 
+## Prérequis
+
 Version Python recommandée : `3.10.9`
 
 Veuillez noter qu'il n'est pas possible d'utiliser Python `3.11.0` et au-delà du fait que `pycrfsuite`, utilisé par `sklearn_crfsuite`, n'est plus compatible à partir de cette version.
+
+Librairies :
+- `joblib`
+- `json`
+- `pandas`
+- `seqeval`
+- `sklearn`
+- `sklearn_crfsuite`
+- `spacy`
+
+Pour plus de détails concernant les versions recommandées, veuillez vous référer à [requirements.txt](/requirements.txt).
 
 ## Guide d'utilisation & préparation des données
 
@@ -122,9 +135,9 @@ En sortie, est généré automatiquement un fichier `*_OUTPUT.json` pour chaque 
 
 ## Regex (ancienne méthode)
 
-/!\ POUR LES REGEX UTILISEES EN POST-TRAITEMENT DE CRF, REFEREZ VOUS À LA FONCTION `post_traitement` DE [L_NER_CRF_train.py](/L_NER_CRF_train.py) /!\
+/!\ POUR LES REGEX UTILISEES EN POST-TRAITEMENT DE CRF, REFEREZ VOUS À LA FONCTION `post_processing` DE [L_NER_CRF_train.py](/L_NER_CRF_train.py)  ET `post_processing_from_raw_offsets` DE [L_NER_CRF.py](/L_NER_CRF.py) /!\
 
-Avant de pouvoir utiliser l'outil de tests de regex, il est conseillé de placer les fichiers originaux de corpus dans un répertoire `data` et  d'utiliser le parser [parser1.py](/parser1.py) qui créera des fichiers CSV pour faciliter la tâche.
-Pour tester les regex, il faut lancer [main.py](/L_NER_old/main.py) ; celui-ci récupère les motifs présents dans [regex_config.json](/L_NER_old/regex_config.json) et les teste sur les ensembles de données spécifiés dans ce même fichier.
-Concernant [main.py](/L_NER_old/main.py), des paramètres peuvent être modifiés dans le header pour faciliter la prise en main : `print_false_positives`, `print_false_negatives` et `print_true_positive` peuvent prendre `True` ou `False` pour faciliter la visualisation des résultats.
-Aussi, il est possible de modifier `excluded_tags` pour que le système ignore ou non certaines regex contenues dans [regex_config.json](/L_NER_old/regex_config.json), entre autres pour pouvoir en tester une sans avoir à réécrire tout le fichier [regex_config.json](/L_NER_old/regex_config.json) ou attendre longuement qu'elles tournent toutes.
+Avant de pouvoir utiliser l'outil de tests de regex, il est conseillé de placer les fichiers originaux de corpus dans un répertoire `/data` et  d'utiliser le parser [parser1.py](/parser1.py) qui créera des fichiers CSV pour faciliter la tâche.
+Pour tester les regex, il faut lancer [main.py](/L_NER_old/regex/main.py) ; celui-ci récupère les motifs présents dans [regex_config.json](/L_NER_old/regex/regex_config.json) et les teste sur les ensembles de données spécifiés dans ce même fichier.
+Concernant [main.py](/L_NER_old/regex/main.py), des paramètres peuvent être modifiés dans le header pour faciliter la prise en main : `print_false_positives`, `print_false_negatives` et `print_true_positive` peuvent prendre `True` ou `False` pour faciliter la visualisation des résultats.
+Aussi, il est possible de modifier `excluded_tags` pour que le système ignore ou non certaines regex contenues dans [regex_config.json](/L_NER_old/regex/regex_config.json), entre autres pour pouvoir en tester une sans avoir à réécrire tout le fichier [regex_config.json](/L_NER_old/regex/regex_config.json) ou attendre longuement qu'elles tournent toutes.
