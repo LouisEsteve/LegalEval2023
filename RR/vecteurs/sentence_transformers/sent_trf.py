@@ -15,7 +15,7 @@ from sentence_transformers import SentenceTransformer, util
 
 # DATA -- A paramétrer si besoin
 CUR_DIR = Path(__file__).parent
-BASE_DIR = os.path.dirname(Path(__file__).parent)
+BASE_DIR = Path(CUR_DIR).parent
 DATA_DIR = os.path.join(BASE_DIR, "Data")
 files = [file for file in os.listdir(DATA_DIR) if ".csv" in file]
 for file in files: 
