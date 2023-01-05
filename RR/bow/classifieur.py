@@ -10,8 +10,10 @@ import nltk
 nltk.download('stopwords')
 from nltk.corpus import stopwords
 from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
 from nltk.stem import WordNetLemmatizer
 from sklearn.neural_network import MLPClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
@@ -23,6 +25,13 @@ from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+
+encoding        =   'UTF-8'
+separator       =   '\t'
+label_encoder   =   LabelEncoder()
+cross_val       =   5
+
+
 # Chargement DF
 df_train = pd.read_csv('RR_TRAIN_alt.csv', encoding='UTF-8', sep='\t')
 df_test = pd.read_csv('RR_DEV_alt.csv', encoding='UTF-8', sep='\t')
@@ -32,21 +41,26 @@ le = LabelEncoder()
 df_train['annotation_label'] = le.fit_transform(df_train['annotation_label'])
 df_test['annotation_label'] = le.transform(df_test['annotation_label'])
 
-train_text = df_train['annotation_text'].fillna(' ')
-test_text = df_test['annotation_text'].fillna(' ')
+train_text = df_train['annotation_text_'].fillna(' ')
+test_text = df_test['annotation_text_'].fillna(' ')
 
 # Pipeline + choix du classifieur
 pipeline = Pipeline([
     ('vectorizer', TfidfVectorizer(stop_words=stopwords.words('english'))),
-    ('classifier', LogisticRegression()) # ACCURACY : 0.55
+    ('classifier', LogisticRegression()), # ACCURACY : 0.56
     #('classifier', MultinomialNB()) # ACCURACY : 0.53
+    #('classifier', KNeighborsClassifier()) # ACCURACY : 0.38
 ])
 
 # Hyperparamètres
 param_grid = {
     'vectorizer__max_features': [1000, 2000, 3000, 4000, 5000],
-    #'classifier__alpha': [0.01, 0.1, 1.0] #MultinomialNB())
+    'vectorizer__ngram_range': [(1,1), (1,2)],
+    #'classifier__alpha': [0.01, 0.1, 1.0], #MultinomialNB())
     'classifier__C': [0.01, 0.1, 1.0] #LogisticRegression())
+    #'classifier__n_neighbors': [3, 5, 7, 9, 11], #KNeighborsClassifier()
+    #'classifier__weights': ['uniform', 'distance'] #KNeighborsClassifier()
+
 }
 
 # Validation croisée
