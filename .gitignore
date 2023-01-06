@@ -13,3 +13,4 @@ L_NER_old_not_kept/*
 *~
 *.pyc
 RR/Data/*.csv
+RR/vecteurs/sentence_transformers/eval_use

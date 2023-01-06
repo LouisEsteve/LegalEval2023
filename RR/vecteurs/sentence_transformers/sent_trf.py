@@ -19,7 +19,7 @@ from sentence_transformers import SentenceTransformer, util
 
 # DATA -- A paramétrer si besoin
 CUR_DIR = Path(__file__).parent
-BASE_DIR = Path(CUR_DIR).parent
+BASE_DIR = Path(Path(CUR_DIR).parent).parent
 DATA_DIR = os.path.join(BASE_DIR, "Data")
 files = [file for file in os.listdir(DATA_DIR) if ".csv" in file]
 for file in files: 
@@ -73,13 +73,14 @@ print("Lemmatisation completed.\n")
 
 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
+print("Generating embeddings...")
 df["embs"] = df["lemmatised"].progress_apply(model.encode)
 
 X = np.array(df["embs"].tolist())
 y = df["label"]
 
 # Initialiser & Entraîner le modèle
-neigh = KNeighborsClassifier(n_neighbors=55) # 55 meilleur k trouvé
+neigh = KNeighborsClassifier(n_neighbors=100) # 100 meilleur k trouvé
 neigh.fit(X, y)
 
 # DEV
@@ -95,6 +96,10 @@ Y = np.array(df_dev["embs"].tolist())
 
 # Faire les prédictions
 df_dev["prediction"] = neigh.predict(Y)
+
+# Produire une sortie avec les prédictions
+output = os.path.join(Path.cwd(), "dev_pred.csv")
+df_dev.to_csv(output, sep=";", encoding="UTF-8")
 
 # Evaluer les prédictions
 evaluate_model(df_dev["label"], df_dev["prediction"])
