@@ -36,7 +36,7 @@ Des hyperparamètres ont été ajoutés et l'objet `GridSearchCV` permet de trou
 Vous pouvez générer les fichiers de données nécessaires à partir des fichiers bruts en exécutant le script [data_extraction.py](RR/Data/data_extraction.py). Le script prend les fichiers bruts fournis par les organisateurs et les convertit en format .csv.
 
 ### Utilisation
-Le script [sent_trf.py](RR/vecteurs/sentence_transformers/sent_trf.py) nettoie, lemmatise et entraîne un système de vectorisation en utilisant les données d'entrée dans le fichier [train.csv](RR/Data/train.csv). Une fois le système entraîné, il pré-traite les données DEV [dev.csv](RR/Data/dev.csv) et fait des prédictions sur ces données.
+Le script [sent_trf.py](RR/vecteurs/sentence_transformers/sent_trf.py) nettoie, lemmatise et vectorise les données du fichier [train.csv](RR/Data/train.csv). Un modèle de k-Nearest Neighbours est entraîné avec ces vecteurs et labels comme donnée d'entrée. Puis, le script pré-traite un nouveau jeu de données DEV [dev.csv](RR/Data/dev.csv) et génère des prédictions.
 
 A la sortie, un fichier avec les prédictions [dev_pred.csv](RR/vecteurs/sentence_transformers/dev_pred.csv) et un rapport de classification [dev_classreport.csv](RR/vecteurs/sentence_transformers/dev_classification_report.csv) seront produits.
 
