@@ -14,6 +14,7 @@ from sklearn.svm import SVC
 from nltk.stem import WordNetLemmatizer
 from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import Perceptron
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
@@ -27,7 +28,7 @@ import seaborn as sns
 
 
 encoding        =   'UTF-8'
-separator       =   '\t'
+sep             =   '\t'
 label_encoder   =   LabelEncoder()
 cross_val       =   5
 
@@ -41,8 +42,8 @@ le = LabelEncoder()
 df_train['annotation_label'] = le.fit_transform(df_train['annotation_label'])
 df_test['annotation_label'] = le.transform(df_test['annotation_label'])
 
-train_text = df_train['annotation_text_'].fillna(' ')
-test_text = df_test['annotation_text_'].fillna(' ')
+train_text = df_train['annotation_text'].fillna(' ')
+test_text = df_test['annotation_text'].fillna(' ')
 
 # Pipeline + choix du classifieur
 pipeline = Pipeline([
@@ -50,17 +51,19 @@ pipeline = Pipeline([
     ('classifier', LogisticRegression()), # ACCURACY : 0.56
     #('classifier', MultinomialNB()) # ACCURACY : 0.53
     #('classifier', KNeighborsClassifier()) # ACCURACY : 0.38
+    #('classifier', Perceptron()), # Perceptron()
 ])
 
 # Hyperparamètres
 param_grid = {
     'vectorizer__max_features': [1000, 2000, 3000, 4000, 5000],
-    'vectorizer__ngram_range': [(1,1), (1,2)],
+    'vectorizer__ngram_range': [(1,1), (1,2),(1,3)],
     #'classifier__alpha': [0.01, 0.1, 1.0], #MultinomialNB())
     'classifier__C': [0.01, 0.1, 1.0] #LogisticRegression())
     #'classifier__n_neighbors': [3, 5, 7, 9, 11], #KNeighborsClassifier()
     #'classifier__weights': ['uniform', 'distance'] #KNeighborsClassifier()
-
+    #'classifier__alpha': [0.01, 0.1, 1.0], # Perceptron()
+    #'classifier__max_iter': [10, 50, 100, 200] # Perceptron()
 }
 
 # Validation croisée
