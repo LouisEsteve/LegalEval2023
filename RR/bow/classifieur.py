@@ -57,17 +57,17 @@ pipeline = Pipeline([
 # Hyperparamètres
 param_grid = {
     'vectorizer__max_features': [1000, 2000, 3000, 4000, 5000],
-    'vectorizer__ngram_range': [(1,1), (1,2),(1,3)],
+    #'vectorizer__ngram_range': [(1,1), (1,2), (1,3)],
     #'classifier__alpha': [0.01, 0.1, 1.0], #MultinomialNB())
     'classifier__C': [0.01, 0.1, 1.0] #LogisticRegression())
     #'classifier__n_neighbors': [3, 5, 7, 9, 11], #KNeighborsClassifier()
     #'classifier__weights': ['uniform', 'distance'] #KNeighborsClassifier()
     #'classifier__alpha': [0.01, 0.1, 1.0], # Perceptron()
-    #'classifier__max_iter': [10, 50, 100, 200] # Perceptron()
+    #'classifier__max_iter': [10, 50, 100, 200]
 }
 
 # Validation croisée
-grid_search = GridSearchCV(pipeline, param_grid, cv=5)
+grid_search = GridSearchCV(pipeline, param_grid, cv=3)
 grid_search.fit(train_text, df_train['annotation_label'])
 
 print(f"Meilleurs paramètres: {grid_search.best_params_}")
@@ -89,11 +89,24 @@ except:
 # Predictions
 y_pred = grid_search.predict(test_text)
 
-
 # Predictions validation croisée
-scores = cross_val_score(grid_search, train_text, df_train['annotation_label'], cv=5)
+scores = cross_val_score(grid_search, train_text, df_train['annotation_label'], cv=3)
 
-# Récupération des noms des étiquettes
+y_pred = le.inverse_transform(y_pred)
+df_test['annotation_label'] = le.inverse_transform(df_test['annotation_label'])
+
+# Créez un nouveau DataFrame à partir des données de test existantes et des prédictions
+df_predictions = df_test[['annotation_text', 'annotation_label']].copy()
+df_predictions['predicted_label'] = y_pred
+
+# Enregistrez le DataFrame en tant que fichier csv nommé 'prediction'
+df_predictions.to_csv('prediction.csv', index=False, sep='\t')
+
+
+
+
+
+'''# Récupération des noms des étiquettes
 labels = le.inverse_transform(np.arange(len(le.classes_)))
 
 # Matrice de confusion
@@ -124,4 +137,4 @@ plt.xlabel('Valeurs prédites')
 plt.title("Matrice de confusion")
 
 # Enregistrement de l'image
-plt.savefig("confusion_matrix.png")
+plt.savefig("confusion_matrix.png")'''
