@@ -23,7 +23,7 @@ Le script `classifieur.py` permet d'entraîner le modèle sur un jeu de données
 Des hyperparamètres ont été ajoutés et l'objet `GridSearchCV` permet de trouver la combinaison qui donne les meilleurs performances. Le meilleur modèle entraîné est enregistré dans un fichier au format `.plk`. Une fois le modèle entraîné, il est utilisé pour prédire les étiquettes du jeu de données de test. A la fin de l'éxécution du script, un tableau au format csv est enregistré. Ce fichier contient les colonnes `annotation_text`, `annotation label` et `predicted_label`. C'est ce ficier qui sera utilisé comme données d'entrée pour le scipt `analyse.py`
 
 ### Analyse des résultats
-Le script `analyse.py` permet l'affichage d'un rapport de classification et d'une matrice de confusion. Il affiche égalemennt une matrice de confusion au format png. Enfin, la fonction `overlap.py` permet de retourner les classes ayant reçu le plus d'annotations incorrectes.
+Le script `analyse.py` permet l'affichage d'un rapport de classification et d'une matrice de confusion. Il affiche égalemennt une matrice de confusion au format png. Enfin fonction permet de retourner les classes ayant reçu le plus d'annotations incorrectes.
 
 ## Vecteurs sémantiques et classification par kNN
 
