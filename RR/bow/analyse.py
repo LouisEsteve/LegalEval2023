@@ -5,6 +5,21 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
+'''
+Sébastien Bosch
+M2 LouTAL
+
+Ce code python est un script d'analyse. Il prend en entrée le fichier prediction.csv généré par par le script RR_BOW.
+Il permet l'affichage de plusieurs éléments:
+- Le rapport de classification (précision / rappel / f1 mesure / accuracy / micro et macro f1).
+- La matrice de confusion
+- La matrice de confusion (format png)
+- Pour chaque classe, le nombre de fois où cette classe a été prédite dans une autre (overlap).
+
+'''
+
+# CREATION DES FONCTIONS:
+
 def load_data(filename):
     df = pd.read_csv(filename, sep='\t')
     return df
@@ -33,6 +48,9 @@ def main():
     df = load_data('prediction.csv')
     y_true = df['annotation_label']
     y_pred = df['predicted_label']
+
+
+# AFFICHAGE DES FONCTIONS
 
     get_classification_report(y_true, y_pred)
     get_confusion_matrix(y_true, y_pred)
