@@ -26,13 +26,6 @@ from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-
-encoding        =   'UTF-8'
-sep             =   '\t'
-label_encoder   =   LabelEncoder()
-cross_val       =   5
-
-
 # Chargement DF
 df_train = pd.read_csv('RR_TRAIN_alt.csv', encoding='UTF-8', sep='\t')
 df_test = pd.read_csv('RR_DEV_alt.csv', encoding='UTF-8', sep='\t')
@@ -67,23 +60,23 @@ param_grid = {
 }
 
 # Validation croisée
-grid_search = GridSearchCV(pipeline, param_grid, cv=3)
+grid_search = GridSearchCV(pipeline, param_grid, cv=5)
 grid_search.fit(train_text, df_train['annotation_label'])
 
 print(f"Meilleurs paramètres: {grid_search.best_params_}")
 
 
-# Chargement d'un modèle (si disponible)
+# Chargement d'un modèle si disponible
 try:
     with open("best_model.pkl", "rb") as f:
         grid_search = pickle.load(f)
         print("Modèle précédemment enregistré chargé avec succès.")
 except:
-    print("Aucun modèle précédemment enregistré trouvé. Utilisation du modèle entraîné.")
+    print("Aucun modèle précédemment enregistré trouvé. Utilisation du modèle crée.")
     # Enregistrement du meilleur modèle dans le fichier "best_model.pkl"
     with open("best_model.pkl", "wb") as f:
         pickle.dump(grid_search, f)
-        print("Meilleur modèle enregistré dans le fichier 'best_model.pkl'.")
+        print("Meilleur modèle enregistré sous le nom de 'best_model.pkl'.")
 
 
 # Predictions
@@ -95,46 +88,12 @@ scores = cross_val_score(grid_search, train_text, df_train['annotation_label'], 
 y_pred = le.inverse_transform(y_pred)
 df_test['annotation_label'] = le.inverse_transform(df_test['annotation_label'])
 
-# Créez un nouveau DataFrame à partir des données de test existantes et des prédictions
+# Création d'un nouveau DataFrame avec les cononnes 'annotation_text', 'annotation_label' et 'predicted_label'
 df_predictions = df_test[['annotation_text', 'annotation_label']].copy()
 df_predictions['predicted_label'] = y_pred
 
-# Enregistrez le DataFrame en tant que fichier csv nommé 'prediction'
+# Enregistrement du DataFrame au format csv
 df_predictions.to_csv('prediction.csv', index=False, sep='\t')
 
 
-
-
-
-'''# Récupération des noms des étiquettes
-labels = le.inverse_transform(np.arange(len(le.classes_)))
-
-# Matrice de confusion
-confusion_mat = confusion_matrix(df_test['annotation_label'], y_pred)
-
-# Affichage de la matrice de confusion
-print("Matrice de confusion :")
-print(confusion_mat)
-
-# Calcul du rapport de classification
-classification_report = classification_report(df_test['annotation_label'], y_pred, target_names=labels)
-
-# Affichage du rapport de classification
-
-print(classification_report)
-
-# Calcul de l'accuracy
-accuracy = accuracy_score(df_test['annotation_label'], y_pred)
-
-# Affichage de l'accuracy
-print(f"\nAccuracy : {accuracy:.3f}")
-
-
-# Matrice de confusion avec seaborn
-sns.heatmap(confusion_mat, annot=True, fmt='d', cmap="crest", xticklabels=labels, yticklabels=labels)
-plt.ylabel('Valeurs réelles')
-plt.xlabel('Valeurs prédites')
-plt.title("Matrice de confusion")
-
-# Enregistrement de l'image
-plt.savefig("confusion_matrix.png")'''
+print(f"Meilleurs paramètres: {grid_search.best_params_}")
