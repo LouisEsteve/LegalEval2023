@@ -34,12 +34,12 @@ from seqeval.scheme import IOB2, IOBES
 
 ########################################
 
-config_path		=	'L_NER_CRF_default_config.json'
+# config_path		=	'L_NER_CRF_default_config.json'
 # config_path		=	'L_NER_CRF_model_103_MERGED.json'
 # config_path		=	'L_NER_CRF_model_104_MERGED_config.json'
 # config_path		=	'L_NER_CRF_model_105_MERGED_config.json'
 # config_path		=	'L_NER_CRF_model_106_MERGED_config.json'
-# config_path		=	'L_NER_CRF_model_101_config.json'
+config_path		=	'L_NER_CRF_model_101_config.json'
 
 # https://readthedocs.org/projects/sklearn-crfsuite/downloads/pdf/latest/
 

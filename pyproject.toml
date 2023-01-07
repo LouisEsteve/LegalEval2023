@@ -1,0 +1,15 @@
+[project]
+name = "LegalEval2023_OrleansUniversity"
+version = "0.1.5"
+authors = [
+  { name="Bosch Sébastien", email="sebastien.bosch@etu.univ-orleans.fr" },
+  { name="Kim Joanne", email="joanne.kim@etu.univ-orleans.fr" },
+  { name="Estève Louis", email="louis.esteve@etu.univ-orleans.fr" },
+]
+description = "University of Orleans participation to LegalEval2023."
+readme = "README.md"
+requires-python = ">=3.7,<3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
