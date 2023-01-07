@@ -14,11 +14,11 @@ def get_classification_report(y_true, y_pred):
     print(report)
 
 def get_confusion_matrix(y_true, y_pred):
-    matrix = pd.crosstab(y_true, y_pred, rownames=['Actual'], colnames=['Predicted'])
+    matrix = pd.crosstab(y_true, y_pred, rownames=['Valeurs réellesValeurs réelles'], colnames=['Valeurs prédites'])
     print(matrix)
 
 def plot_confusion_matrix(y_true, y_pred):
-    matrix = pd.crosstab(y_true, y_pred, rownames=['Actual'], colnames=['Predicted'])
+    matrix = pd.crosstab(y_true, y_pred, rownames=['Valeurs réelles'], colnames=['Valeurs prédites'])
     sns.heatmap(matrix, annot=True, fmt='g', cmap="OrRd")
     plt.ylabel('Valeurs réelles')
     plt.xlabel('Valeurs prédites')
