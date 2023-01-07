@@ -5,31 +5,39 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
+def load_data(filename):
+    df = pd.read_csv(filename, sep='\t')
+    return df
 
-# OUVERTURE DU FICHIER
-df = pd.read_csv('prediction.csv',sep='\t')
+def get_classification_report(y_true, y_pred):
+    report = classification_report(y_true, y_pred)
+    print(report)
 
-y_true  =   df['annotation_label']
-y_pred  =   df['predicted_label']
+def get_confusion_matrix(y_true, y_pred):
+    matrix = pd.crosstab(y_true, y_pred, rownames=['Actual'], colnames=['Predicted'])
+    print(matrix)
 
+def plot_confusion_matrix(y_true, y_pred):
+    matrix = pd.crosstab(y_true, y_pred, rownames=['Actual'], colnames=['Predicted'])
+    sns.heatmap(matrix, annot=True, fmt='g', cmap="OrRd")
+    plt.ylabel('Valeurs réelles')
+    plt.xlabel('Valeurs prédites')
+    plt.show()
 
-# RAPPORT DE CLASSIFICATION
-classification_report = classification_report(y_true,y_pred)
-print(classification_report)
+def get_overlap(df, y_true_col, y_pred_col):
+    overlap = pd.crosstab(df[y_true_col], df[y_pred_col]).apply(lambda x: x[x.index != x.name].sum(), axis=1)
+    overlap = overlap.sort_values(ascending=False)
+    print(overlap)
 
+def main():
+    df = load_data('prediction.csv')
+    y_true = df['annotation_label']
+    y_pred = df['predicted_label']
 
-# MATRICE DE CONFUSION
-confusion_matrix = pd.crosstab(y_true, y_pred, rownames=['Actual'], colnames=['Predicted'])
-print(confusion_matrix)
+    get_classification_report(y_true, y_pred)
+    get_confusion_matrix(y_true, y_pred)
+    get_overlap(df, 'annotation_label', 'predicted_label')
+    plot_confusion_matrix(y_true, y_pred)
 
-
-# AFFICHER LA MATRCIE DE CONFUSION PNG
-sns.heatmap(confusion_matrix, annot=True, fmt='g', cmap="OrRd")
-plt.ylabel('Valeurs réelles')
-plt.xlabel('Valeurs prédites')
-#plt.show()
-
-# CALCULER l'OVERLAP
-overlap = pd.crosstab(df['annotation_label'], df['predicted_label']).apply(lambda x: x[x.index != x.name].sum(), axis=1)
-overlap = overlap.sort_values(ascending=False)
-print(overlap)
+if __name__ == '__main__':
+    main()
