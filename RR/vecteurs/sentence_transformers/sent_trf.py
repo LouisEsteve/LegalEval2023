@@ -1,6 +1,5 @@
 # LIBRAIRIES
 import os
-import re
 from pathlib import Path
 from string import punctuation
 
@@ -27,6 +26,7 @@ for file in files:
         TRAIN = os.path.join(DATA_DIR, file)
     elif file=="dev.csv":
         DEV = os.path.join(DATA_DIR, file)
+n = int(input("Veuillez désigner un nombre k pour le modèle kNN (100 par défaut) : ")) or 100
 
 nlp = spacy.load("en_core_web_sm")
 stopwords = nlp.Defaults.stop_words
@@ -45,20 +45,6 @@ def process_text(text):
                 lemmas.append(token.lemma_)
     processed = ' '.join(token for token in lemmas)
     return processed
-
-def evaluate_model(label, pred):
-    """
-    Créer, imprimer à la console et sauvegarder un rapport des scores des métriques d'évaluation
-    """
-    cr = metrics.classification_report(label, pred, zero_division=1, digits=3)
-    print(cr, "\n")
-    
-    cr = metrics.classification_report(label, pred, zero_division=1, digits=3, output_dict=True)
-    df_cr = pd.DataFrame(cr)
-    filepath = os.path.join(Path.cwd(), "dev_classification_report.csv")
-    df_cr.to_csv(filepath, sep=";", encoding="UTF-8")
-    print(f"Métriques d'évaluation sauvegardés @ {filepath}.")
-    
 
 # CODE
 tqdm.pandas(desc="Executing ")
@@ -80,7 +66,7 @@ X = np.array(df["embs"].tolist())
 y = df["label"]
 
 # Initialiser & Entraîner le modèle
-neigh = KNeighborsClassifier(n_neighbors=100) # 100 meilleur k trouvé
+neigh = KNeighborsClassifier(n_neighbors=n) # 100 meilleur k trouvé
 neigh.fit(X, y)
 
 # DEV
@@ -100,6 +86,4 @@ df_dev["prediction"] = neigh.predict(Y)
 # Produire une sortie avec les prédictions
 output = os.path.join(Path.cwd(), "dev_pred.csv")
 df_dev.to_csv(output, sep=";", encoding="UTF-8")
-
-# Evaluer les prédictions
-evaluate_model(df_dev["label"], df_dev["prediction"])
+print(f"Le fichier de sortie contenant les prédictions se trouve à {output}.")
