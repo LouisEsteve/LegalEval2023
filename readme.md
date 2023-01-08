@@ -4,7 +4,7 @@ Nous avons pour objectif ici de participer aux tâches RR et L-NER de la campagn
 
 # RR
 
-## Classifieurs
+## Vecteurs bow et classification par régression logistique.
 
 ### Prérequis
 - `pickle5`
@@ -16,11 +16,14 @@ Nous avons pour objectif ici de participer aux tâches RR et L-NER de la campagn
 - `numpy`
 
 ### Données d'entrée
-Les données d'entraînement [RR_TRAIN_alt.csv](RR/Data/RR_TRAIN_alt.csv) et les données test [RR_DEV_alt.csv](RR/Data/RR_DEV_alt.csv) sont disponsibles dans le dossier [Data](RR/Data). Ces deux fichiers ont été générés grâce au script [data_extraction.py](RR/Data/data_extraction.py).
+Les données d'entraînement [RR_TRAIN_alt.csv](RR/Data/RR_TRAIN_alt.csv) et les données test [RR_DEV_alt.csv](RR/Data/RR_DEV_alt.csv) sont disponsibles dans le dossier [Data](RR/Data).
 
 ### Fonctionnement et utilisation
-Le script `regression_logistique.py` permet d'entraîner le modèle sur un jeu de données d'entraînement, puis de tester sur un jeu de données de test. Par défaut, le classifieur utilisé est `LogisticRegression` car c'est celui qui donne les meilleurs résultats. Le nombre de plis pour la validation croisée est paramétrée à 5.
-Des hyperparamètres ont été ajoutés et l'objet `GridSearchCV` permet de trouver la combinaison qui donne les meilleurs performances. Le meilleur modèle entraîné est enregistré dans un fichier au format `.plk`. Une fois le modèle entraîné, il est utilisé pour prédire les étiquettes du jeu de données de test. Enfin, le script affiche un rapport de classification et une matrice de confusion. A noter qu'une matrice de confusion est également enregistrée au format `.png` dans un fichier.
+Le script `classifieur.py` permet d'entraîner le modèle sur un jeu de données d'entraînement, puis de tester sur un jeu de données de test. Par défaut, le classifieur utilisé est `LogisticRegression` car c'est celui qui donne les meilleurs résultats. Le nombre de plis pour la validation croisée est paramétrée à 5.
+Des hyperparamètres ont été ajoutés et l'objet `GridSearchCV` permet de trouver la combinaison qui donne les meilleurs performances. Le meilleur modèle entraîné est enregistré dans un fichier au format `.plk`. Une fois le modèle entraîné, il est utilisé pour prédire les étiquettes du jeu de données de test. A la fin de l'éxécution du script, un tableau au format csv est enregistré. Ce fichier contient les colonnes `annotation_text`, `annotation label` et `predicted_label`. C'est ce ficier qui sera utilisé comme données d'entrée pour le scipt `analyse.py`
+
+### Analyse des résultats
+Le script `analyse.py` permet l'affichage d'un rapport de classification et d'une matrice de confusion. Il affiche égalemennt une matrice de confusion au format png. Enfin fonction permet de retourner les classes ayant reçu le plus d'annotations incorrectes.
 
 ## Vecteurs sémantiques et classification par kNN
 
