@@ -17,6 +17,8 @@ SUGGESTED RUNS:
 
 About the last part, with underlined annotations appearing on the screen, in some cases it may appear that all cases have the same frontiers, it is not a bug, it's just that for some overlapping classes, the CRF doesn't have any issues with frontier detection.
 Cases in which different frontiers are present have been tested, and display appropriately on the screen.
+
+Also, we suggest to keep ignore_default_for_overlapping_classes set to true, as overlapping with false negatives is not really what matters for analysis.
 '''
 
 ##################################################
@@ -140,8 +142,14 @@ def main() -> int:
 		df['y_predict']	=	df['y_predict'].apply(lambda x: x[2:] if x != 'O' else 'NONE')
 		for name, group in df.groupby('text_id'):
 			print(f'Matrix {n}/{n_text_id}; {name}',end='\r')
-			previous_y_value	=	'NONE'
-			previous_y_predict	=	'NONE'
+			# previous_y_value	=	'NONE'
+			# previous_y_predict	=	'NONE'
+			if config['ignore_default_for_overlapping_classes']:
+				previous_y_value	=   'NONE'
+				previous_y_predict  =   'NONE'
+			else:
+				previous_y_value	=   None
+				previous_y_predict  =   None
 			for id, row in group.iterrows():
 				new_y_value	=	row['y_value']
 				new_y_predict	=	row['y_predict']
@@ -170,6 +178,9 @@ def main() -> int:
 			n	+=	1
 		# df_ct	=	pd.DataFrame.from_dict(local_dict)
 		df_ct	=	pd.DataFrame.from_dict(local_dict,orient='index')
+		if config['ignore_default_for_overlapping_classes']:
+			df_ct.pop('NONE')
+			df_ct   =   df_ct[df_ct.index != 'NONE']
 	else:
 		'''
 		This perspective can be understood as : each token is individually considered as an overlap.
@@ -210,6 +221,7 @@ def main() -> int:
 	# df_ct.sort_values(df_ct.index,inplace=True)
 	df_ct.sort_values(df_ct.index.name,inplace=True)
 	print(df_ct)
+	df_ct.style.to_latex('confusion_matrix.tex')
 
 	# These are the scaling options, I tested them and "symlog" seems to be the most interesting for display
 	# >>> matplotlib.scale.get_scale_names()
@@ -240,7 +252,8 @@ def main() -> int:
 				continue
 			if config["ignore_default_for_overlapping_classes"] and j in ['O','NONE']:
 				continue
-			local_value	=	df_ct.loc[i,j]
+			# local_value	=	df_ct.loc[i,j]
+			local_value	=	df_ct.loc[j,i] # fixed, as df.loc actually takes rows first and then columns
 			if local_value > max_cell_value:
 				max_cell_value	=	local_value
 				max_x		=	j
@@ -309,8 +322,12 @@ def main() -> int:
 	
 	series_y_values		=	[]
 	series_y_predict	=	[]
-	previous_y_value	=	'NONE'
-	previous_y_predict	=	'NONE'
+	if config['ignore_default_for_overlapping_classes']:
+		previous_y_value	=	'NONE'
+		previous_y_predict	=	'NONE'
+	else:
+		previous_y_value	=   None
+		previous_y_predict  =   None
 	for index, row in df.iterrows():
 		########
 		# Check if it's the y_value we're looking for
@@ -390,8 +407,12 @@ def main() -> int:
 					break
 			series_y_values		=	[]
 			series_y_predict	=	[]
-			previous_y_value	=	'NONE'
-			previous_y_predict	=	'NONE'
+			if config['ignore_default_for_overlapping_classes']:
+				previous_y_value	=	'NONE'
+				previous_y_predict	=	'NONE'
+			else:
+				previous_y_value	=   None
+				previous_y_predict  =   None
 			current_text_id		=	row['text_id']
 		
 		if display_count >= config["display_max"]:
