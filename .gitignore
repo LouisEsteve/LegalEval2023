@@ -9,7 +9,7 @@ NER_DEV/*
 *.zip
 *.feather
 *.pt
-L_NER_old_not_kept/*
+L_NER/L_NER_old_not_kept/*
 *~
 *.pyc
 RR/Data/*.csv
