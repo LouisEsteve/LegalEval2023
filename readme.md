@@ -65,11 +65,11 @@ Pour plus de détails concernant les versions recommandées, veuillez vous réf�
 ## Guide d'utilisation & préparation des données
 
 Afin de préparer les données :
-- après avoir mis les fichiers de corpus dans le répertoire `/data`, lancez [parser1.py](/parser1.py) pour transformer les données dans un format CSV
+- après avoir mis les fichiers de corpus dans le répertoire [data](/tools/data), lancez [parser1.py](/tools/parser1.py) pour transformer les données dans un format CSV
 ```sh
 python parser1.py
 ```
-- si vous n'avez pas de DEV à votre disposition, pour séparer en TRAIN/DEV (pour l'entrainement des CRFs), lancez ensuite [corpus_splitter_v2.py](/corpus_splitter_v2.py)
+- si vous n'avez pas de DEV à votre disposition, pour séparer en TRAIN/DEV (pour l'entrainement des CRFs), lancez ensuite [corpus_splitter_v2.py](/tools/corpus_splitter_v2.py)
 ```sh
 python corpus_splitter_v2.py
 ```
@@ -129,7 +129,7 @@ En sortie, est généré automatiquement un fichier `*_OUTPUT.json` pour chaque 
 
 /!\ POUR LES REGEX UTILISEES EN POST-TRAITEMENT DE CRF, REFEREZ VOUS À LA FONCTION `post_processing` DE [L_NER_CRF_train.py](/L_NER/L_NER_CRF_train.py)  ET `post_processing_from_raw_offsets` DE [L_NER_CRF.py](/L_NER/L_NER_CRF.py) /!\
 
-Avant de pouvoir utiliser l'outil de tests de regex, il est conseillé de placer les fichiers originaux de corpus dans un répertoire `/data` et  d'utiliser le parser [parser1.py](/parser1.py) qui créera des fichiers CSV pour faciliter la tâche.
+Avant de pouvoir utiliser l'outil de tests de regex, il est conseillé de placer les fichiers originaux de corpus dans un répertoire [data](/tools/data) et  d'utiliser le parser [parser1.py](/tools/parser1.py) qui créera des fichiers CSV pour faciliter la tâche.
 Pour tester les regex, il faut lancer [main.py](/L_NER/L_NER_old/regex/main.py) ; celui-ci récupère les motifs présents dans [regex_config.json](/L_NER/L_NER_old/regex/regex_config.json) et les teste sur les ensembles de données spécifiés dans ce même fichier.
 Concernant [main.py](/L_NER/L_NER_old/regex/main.py), des paramètres peuvent être modifiés dans le header pour faciliter la prise en main : `print_false_positives`, `print_false_negatives` et `print_true_positive` peuvent prendre `True` ou `False` pour faciliter la visualisation des résultats.
 Aussi, il est possible de modifier `excluded_tags` pour que le système ignore ou non certaines regex contenues dans [regex_config.json](/L_NER/L_NER_old/regex/regex_config.json), entre autres pour pouvoir en tester une sans avoir à réécrire tout le fichier [regex_config.json](/L_NER/L_NER_old/regex/regex_config.json) ou attendre longuement qu'elles tournent toutes.
