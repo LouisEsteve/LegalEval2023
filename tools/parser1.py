@@ -4,7 +4,8 @@ from os.path import exists
 import re
 import pandas as pd
 
-data_path			=	'data'
+# data_path			=	'data'
+data_path			=	'NER_DEV/NER_DEV'
 
 encoding			=	'UTF-8'
 
