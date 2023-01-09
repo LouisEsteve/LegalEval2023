@@ -15,4 +15,3 @@ L_NER_old_not_kept/*
 RR/Data/*.csv
 RR/vecteurs/sentence_transformers/eval_use
 RR/ngrams
-/*.csv
