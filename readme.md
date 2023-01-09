@@ -41,7 +41,7 @@ Vous pouvez générer les fichiers de données nécessaires à partir des fichie
 ### Utilisation
 Le script [sent_trf.py](RR/vecteurs/sentence_transformers/sent_trf.py) nettoie, lemmatise et vectorise les données du fichier [train.csv](RR/Data/train.csv). Un modèle de k-Nearest Neighbours est entraîné avec ces vecteurs et labels comme donnée d'entrée. Puis, le script pré-traite un nouveau jeu de données DEV [dev.csv](RR/Data/dev.csv) et génère des prédictions.
 
-A la sortie, un fichier avec les prédictions [dev_pred.csv](RR/vecteurs/sentence_transformers/dev_pred.csv) et un rapport de classification [dev_classreport.csv](RR/vecteurs/sentence_transformers/dev_classification_report.csv) seront produits.
+A la sortie, un fichier avec les prédictions [dev_pred.csv](RR/vecteurs/sentence_transformers/dev_pred.csv) et un rapport de classification [dev_classification_report.csv](RR/vecteurs/sentence_transformers/dev_classification_report.csv) seront produits.
 
 # L-NER
 
