@@ -27,32 +27,3 @@ merge(config["TEXT_BASE_TRAIN_PATH_IN"],config["TEXT_BASE_DEV_PATH_IN"],config["
 merge(config["ANNOT_PREAMBLE_TRAIN_PATH_IN"],config["ANNOT_PREAMBLE_DEV_PATH_IN"],config["ANNOT_PREAMBLE_PATH_OUT"],True)
 merge(config["ANNOT_JUDGEMENT_TRAIN_PATH_IN"],config["ANNOT_JUDGEMENT_DEV_PATH_IN"],config["ANNOT_JUDGEMENT_PATH_OUT"],True)
 merge(config["FEATURES_TRAIN_PATH_IN"],config["FEATURES_DEV_PATH_IN"],config["FEATURES_PATH_OUT"],True)
-
-'''
-df1	=	pd.read_csv(config["TEXT_BASE_TRAIN_PATH_IN"],sep=config["SEP"],index_col=["id"],dtype={"text_id":"str"})
-df2	=	pd.read_csv(config["TEXT_BASE_DEV_PATH_IN"],sep=config["SEP"],index_col=["id"],dtype={"text_id":"str"})
-df3	=	pd.concat([df1,df2])
-df3.to_csv(config["TEXT_BASE_PATH_OUT"],sep=config["SEP"])
-print(f'Wrote {config["TEXT_BASE_PATH_OUT"]}')
-
-df1	=	pd.read_csv(config["ANNOT_PREAMBLE_TRAIN_PATH_IN"],sep=config["SEP"],index_col=["id"],dtype={"text_id":"str"})
-df2	=	pd.read_csv(config["ANNOT_PREAMBLE_DEV_PATH_IN"],sep=config["SEP"],index_col=["id"],dtype={"text_id":"str"})
-df2.index	+=	len(df1) #!
-df3	=	pd.concat([df1,df2])
-df3.to_csv(config["ANNOT_PREAMBLE_PATH_OUT"],sep=config["SEP"])
-print(f'Wrote {config["ANNOT_PREAMBLE_PATH_OUT"]}')
-
-df1	=	pd.read_csv(config["ANNOT_JUDGEMENT_TRAIN_PATH_IN"],sep=config["SEP"],index_col=["id"],dtype={"text_id":"str"})
-df2	=	pd.read_csv(config["ANNOT_JUDGEMENT_DEV_PATH_IN"],sep=config["SEP"],index_col=["id"],dtype={"text_id":"str"})
-df2.index	+=	len(df1) #!
-df3	=	pd.concat([df1,df2])
-df3.to_csv(config["ANNOT_JUDGEMENT_PATH_OUT"],sep=config["SEP"])
-print(f'Wrote {config["ANNOT_JUDGEMENT_PATH_OUT"]}')
-
-df1	=	pd.read_csv(config["FEATURES_TRAIN_PATH_IN"],sep=config["SEP"],index_col=["id"],dtype={"text_id":"str"})
-df2	=	pd.read_csv(config["FEATURES_DEV_PATH_IN"],sep=config["SEP"],index_col=["id"],dtype={"text_id":"str"})
-df2.index	+=	len(df1) #!
-df3	=	pd.concat([df1,df2])
-df3.to_csv(config["FEATURES_PATH_OUT"],sep=config["SEP"])
-print(f'Wrote {config["FEATURES_PATH_OUT"]}')
-'''
