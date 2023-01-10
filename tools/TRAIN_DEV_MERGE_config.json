@@ -1,0 +1,15 @@
+{
+	"SEP"				:	"\t",
+	"TEXT_BASE_TRAIN_PATH_IN"	:	"../L_NER/data/NER_TRAIN_text_base.csv",
+	"TEXT_BASE_DEV_PATH_IN"		:	"../L_NER/NER_DEV/NER_DEV/NER_DEV_text_base.csv",
+	"ANNOT_PREAMBLE_TRAIN_PATH_IN"	:	"../L_NER/data/NER_TRAIN_PREAMBLE_restructured7.csv",
+	"ANNOT_JUDGEMENT_TRAIN_PATH_IN"	:	"../L_NER/data/NER_TRAIN_JUDGEMENT_restructured7.csv",
+	"ANNOT_PREAMBLE_DEV_PATH_IN"	:	"../L_NER/NER_DEV/NER_DEV/NER_DEV_PREAMBLE_restructured0.csv",
+	"ANNOT_JUDGEMENT_DEV_PATH_IN"	:	"../L_NER/NER_DEV/NER_DEV/NER_DEV_JUDGEMENT_restructured0.csv",
+	"FEATURES_TRAIN_PATH_IN"	:	"../L_NER/features_memory_train8.csv",
+	"FEATURES_DEV_PATH_IN"		:	"../L_NER/features_memory_dev8.csv",
+	"TEXT_BASE_PATH_OUT"		:	"../L_NER/data/NER_MERGED_TEXT_BASE.csv",
+	"ANNOT_PREAMBLE_PATH_OUT"	:	"../L_NER/data/NER_MERGED_PREAMBLE.csv",
+	"ANNOT_JUDGEMENT_PATH_OUT"	:	"../L_NER/data/NER_MERGED_JUDGEMENT.csv",
+	"FEATURES_PATH_OUT"		:	"../L_NER/features_memory_train8_MERGED.csv"
+}
