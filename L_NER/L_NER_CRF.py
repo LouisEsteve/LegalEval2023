@@ -168,7 +168,7 @@ def regex_annotation(
 	local_regex	=	re.compile(regex_pattern)
 	for i in range(len(raw_texts)):
 		results.append([])
-		for j in date_regex.finditer(raw_texts[i]):
+		for j in local_regex.finditer(raw_texts[i]):
 			results[i].append((j.start(),j.end()))
 	return results
 	
