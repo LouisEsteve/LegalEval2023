@@ -151,12 +151,33 @@ def features_for_CRF_from_SpaCy_doc(
 	
 	return X_features, X_offsets
 
+def regex_annotation(
+        raw_texts   :   list,
+        regex_pattern   :   str
+    ):
+    '''
+    Returns the annotation spans for a given regex over a number of texts.
+
+	def regex_annotation(
+	        raw_texts   :   list,
+	        regex_pattern   :   str
+	    ):
+    '''
+    results =   []
+	local_regex	=	re.compile(regex_pattern)
+	for i in range(len(raw_texts)):
+        results.append([])
+		for j in date_regex.finditer(raw_texts[i]):
+			results[i].append((j.start(),j.end()))
+    return results
+    
 
 def post_processing_from_raw_offsets(
 		raw_texts		:	list,
 		enable_cities_query	:	bool	=	False,
 		enable_DATE_regex	:	bool	=	False,
-		enable_ORG_regex	:	bool	=	False
+		enable_ORG_regex	:	bool	=	False,
+		enable_CASE_NUMBER_regex	:	bool	=	False
 	) -> list:
 	'''
 	This function takes the features and predictions, and returns the predictions once post-processing has been done.
@@ -166,7 +187,8 @@ def post_processing_from_raw_offsets(
 			raw_texts		    :	list,
 			enable_cities_query	:	bool	=	False,
 			enable_DATE_regex	:	bool	=	False,
-			enable_ORG_regex	:	bool	=	False
+			enable_ORG_regex	:	bool	=	False,
+			enable_CASE_NUMBER_regex	:	bool	=	False
 		) -> list:
 	'''
 	
@@ -197,27 +219,29 @@ def post_processing_from_raw_offsets(
 	
 	if enable_DATE_regex:
 		if "DATE_regex_pattern" in config:
-			date_regex	=	re.compile(config["DATE_regex_pattern"])
-			for i in range(len(raw_texts)):
-				if 'DATE' not in output_annotations[i]:
-					output_annotations[i]['DATE']	=	[]
-				for j in date_regex.finditer(raw_texts[i]):
-					output_annotations[i]['DATE'].append((j.start(),j.end()))
+            regex_result    =   regex_annotation(raw_texts,config["DATE_regex_pattern"])
+            for i in range(len(raw_texts)):
+                output_annotations[i]['DATE']   =   regex_result[i]
 		else:
 			print("Could not find \"DATE_regex_pattern\" in config file, or it is not of type str.")
 		
 	
 	if enable_ORG_regex:
 		if "ORG_regex_pattern" in config:
-			org_regex	=	re.compile(config["ORG_regex_pattern"])
-			for i in range(len(raw_texts)):
-				if 'ORG' not in output_annotations[i]:
-					output_annotations[i]['ORG']	=	[]
-				for j in org_regex.finditer(raw_texts[i]):
-					output_annotations[i]['ORG'].append((j.start(),j.end()))
+            regex_result    =   regex_annotation(raw_texts,config["ORG_regex_pattern"])
+            for i in range(len(raw_texts)):
+                output_annotations[i]['ORG']   =   regex_result[i]
 		else:
 			print("Could not find \"ORG_regex_pattern\" in config file, or it is not of type str.")
 	
+	if enable_CASE_NUMBER_regex:
+		if "CASE_NUMBER_regex_pattern" in config:
+            regex_result    =   regex_annotation(raw_texts,config["CASE_NUMBER_regex_pattern"])
+            for i in range(len(raw_texts)):
+                output_annotations[i]['CASE_NUMBER']   =   regex_result[i]
+		else:
+			print("Could not find \"CASE_NUMBER_regex_pattern\" in config file, or it is not of type str.")
+
 	'''
 	# low
 	PERSON_types	=	['JUDGE','LAWYER','RESPONDENT','PETITIONER','WITNESS','OTHER_PERSON']
@@ -574,6 +598,7 @@ def main() -> int:
 			enable_cities_query	=	"enable_cities_query" in config and config["enable_cities_query"],
 			enable_DATE_regex	=	"enable_DATE_regex" in config and config["enable_DATE_regex"],
 			enable_ORG_regex	=	"enable_ORG_regex" in config and config["enable_ORG_regex"]
+			enable_CASE_NUMBER_regex	=	"enable_CASE_NUMBER_regex" in config and config["enable_CASE_NUMBER_regex"]
 		)
 		post_processing_added_annotations_count	=	0
 		for j in range(len(post_processing_annotations)):
