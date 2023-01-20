@@ -33,9 +33,10 @@ from L_NER_CRF_train import IOB2_transformer, IOBES_transformer
 
 # config_path		=	'L_NER_CRF_default_config.json'
 # config_path		=	'L_NER_CRF_model_100_config.json'
-# config_path         =   'L_NER_CRF_model_106_MERGED_config_NO_POSTPROCESSING.json'
-# config_path         =   'L_NER_CRF_model_106_MERGED_config_POSTPROCESSING_DATE.json'
-config_path         =   'L_NER_CRF_model_106_MERGED_config_POSTPROCESSING_DATE_FIX.json'
+# config_path		 =   'L_NER_CRF_model_106_MERGED_config_NO_POSTPROCESSING.json'
+# config_path		 =   'L_NER_CRF_model_106_MERGED_config_POSTPROCESSING_DATE.json'
+# config_path		 =   'L_NER_CRF_model_106_MERGED_config_POSTPROCESSING_DATE_FIX.json'
+config_path		 =   'L_NER_CRF_model_106_MERGED_config_DATE_ORG_GPE_CASE_NUMBER_POSTPROCESSING.json'
 
 # https://readthedocs.org/projects/sklearn-crfsuite/downloads/pdf/latest/
 
@@ -188,7 +189,7 @@ def post_processing_from_raw_offsets(
 	
 	
 	def post_processing_from_raw_offsets(
-			raw_texts		    :	list,
+			raw_texts			:	list,
 			enable_cities_query	:	bool	=	False,
 			enable_DATE_regex	:	bool	=	False,
 			enable_ORG_regex	:	bool	=	False,
@@ -439,6 +440,7 @@ def main() -> int:
 		print(f'Could not start script without configuration file. Exiting.')
 		return 1
 	
+	'''
 	global CRF_model
 	# prepare_model()
 	
@@ -449,7 +451,7 @@ def main() -> int:
 		print(e)
 		print(f'Could not load model from {config["model_path"]}, see message above. Exiting.')
 		return 1
-	
+	'''
 	
 	########
 	# For each file given as input, process it and generate an output
@@ -458,9 +460,11 @@ def main() -> int:
 	global spacy_docs
 	global doc_index
 	
+	'''
 	nlp	=	spacy.load(config["spacy_model"])
 	print(f'Loaded SpaCy with model {config["spacy_model"]}')
-	
+	'''
+
 	annot_count	=	0
 	file_count	=	1
 	n_files		=	len(corpus_objects)
@@ -474,24 +478,25 @@ def main() -> int:
 			id_list.append(j["id"])
 		annotation_docs	=	{}
 		len_text_list	=	len(text_list)
+		'''
 		print('SpaCy processing:')
 		for doc in nlp.pipe(text_list):
 			print(f'File {file_count}/{n_files} ({i}); text {doc_index+1}/{len_text_list} ({id_list[doc_index]})',end='\r')
 			annotation_docs[id_list[doc_index]]	=	doc
 			doc_index	+=	1
-		
+		'''
 		###########################
-		
+		'''
 		X_features_full	=	[]
 		X_offsets_full	=	[]
+		'''
 		
 		len_i		=	len(corpus_objects[i])
 		j_count		=	1
-		
 		########
 		# Generate the features, which will then be loaded into the CRF
 		########
-		
+		'''
 		print('\nFeature generation:')
 		for j in corpus_objects[i]:
 			print(f'File {file_count}/{n_files} ({i}); text {j_count}/{len_i} ({j["id"]})',end='\r')
@@ -507,15 +512,15 @@ def main() -> int:
 			X_offsets_full.append(X_offsets)
 			
 			j_count	+=	1	#!
+		'''
 		j_count	=	1
-		
 		########
 		# Make the predictions
 		########
-		
+		'''
 		print('\nPrediction:')
 		prediction_full	=	CRF_model.predict(X_features_full)
-		
+		'''
 		########
 		# Transform IOB2 annotations into raw offset annotations and place them into the JSON structure
 		########
@@ -526,6 +531,12 @@ def main() -> int:
 			occupied_offsets[j["id"]]	=	[]
 			print(f'File {file_count}/{n_files} ({i}); text {j_count}/{len_i} ({j["id"]})',end='\r')
 			
+			#for k in corpus_objects[i][j]["annotations"][0]["result"]:
+			for k in j["annotations"][0]["result"]:
+				#occupied_offsets[j["id"]].append((k["value"]["start_index"],k["value"]["end_index"]))
+				occupied_offsets[j["id"]].append((k["value"]["start"],k["value"]["end"]))
+
+			'''
 			result_obj	=	{
 				"result"	:	[]
 			}
@@ -591,6 +602,7 @@ def main() -> int:
 				annot_count	+=	1
 
 			j["annotations"].append(result_obj)
+			'''
 			j_count	+=	1
 		
 		########
