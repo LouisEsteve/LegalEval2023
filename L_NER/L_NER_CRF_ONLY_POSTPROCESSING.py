@@ -440,18 +440,6 @@ def main() -> int:
 		print(f'Could not start script without configuration file. Exiting.')
 		return 1
 	
-	'''
-	global CRF_model
-	# prepare_model()
-	
-	try:
-		CRF_model	=	joblib.load(config["model_path"])
-		print(f'Loaded {config["model_path"]}')
-	except OSError or IOError as e:
-		print(e)
-		print(f'Could not load model from {config["model_path"]}, see message above. Exiting.')
-		return 1
-	'''
 	
 	########
 	# For each file given as input, process it and generate an output
@@ -459,11 +447,6 @@ def main() -> int:
 	
 	global spacy_docs
 	global doc_index
-	
-	'''
-	nlp	=	spacy.load(config["spacy_model"])
-	print(f'Loaded SpaCy with model {config["spacy_model"]}')
-	'''
 
 	annot_count	=	0
 	file_count	=	1
@@ -478,49 +461,12 @@ def main() -> int:
 			id_list.append(j["id"])
 		annotation_docs	=	{}
 		len_text_list	=	len(text_list)
-		'''
-		print('SpaCy processing:')
-		for doc in nlp.pipe(text_list):
-			print(f'File {file_count}/{n_files} ({i}); text {doc_index+1}/{len_text_list} ({id_list[doc_index]})',end='\r')
-			annotation_docs[id_list[doc_index]]	=	doc
-			doc_index	+=	1
-		'''
+		
 		###########################
-		'''
-		X_features_full	=	[]
-		X_offsets_full	=	[]
-		'''
 		
 		len_i		=	len(corpus_objects[i])
 		j_count		=	1
-		########
-		# Generate the features, which will then be loaded into the CRF
-		########
-		'''
-		print('\nFeature generation:')
-		for j in corpus_objects[i]:
-			print(f'File {file_count}/{n_files} ({i}); text {j_count}/{len_i} ({j["id"]})',end='\r')
-			
-			j["annotations"]	=	[]
-			
-			text			=	j["data"]["text"]
-			X_features, X_offsets	=	features_for_CRF_from_SpaCy_doc(annotation_docs[j["id"]])
-			if __debug__:
-				assert len(X_features) == len(X_offsets)
-			
-			X_features_full.append(X_features)
-			X_offsets_full.append(X_offsets)
-			
-			j_count	+=	1	#!
-		'''
-		j_count	=	1
-		########
-		# Make the predictions
-		########
-		'''
-		print('\nPrediction:')
-		prediction_full	=	CRF_model.predict(X_features_full)
-		'''
+		
 		########
 		# Transform IOB2 annotations into raw offset annotations and place them into the JSON structure
 		########
@@ -531,78 +477,9 @@ def main() -> int:
 			occupied_offsets[j["id"]]	=	[]
 			print(f'File {file_count}/{n_files} ({i}); text {j_count}/{len_i} ({j["id"]})',end='\r')
 			
-			#for k in corpus_objects[i][j]["annotations"][0]["result"]:
 			for k in j["annotations"][0]["result"]:
-				#occupied_offsets[j["id"]].append((k["value"]["start_index"],k["value"]["end_index"]))
 				occupied_offsets[j["id"]].append((k["value"]["start"],k["value"]["end"]))
 
-			'''
-			result_obj	=	{
-				"result"	:	[]
-			}
-			
-			text		=	j["data"]["text"]
-			prediction	=	prediction_full[j_count-1]
-			X_offsets	=	X_offsets_full[j_count-1]
-			
-			start_index	=	None
-			end_index	=	None
-			NE_type		=	None
-			for k in range(len(prediction)):
-				if prediction[k].startswith('B-') or prediction[k].startswith('S-') or prediction[k] == 'O':
-					if start_index != None:
-						value_obj	=	{
-							"start"		:	start_index,
-							"end"		:	end_index,
-							"text"		:	text[start_index:end_index],
-							"labels"	:	[
-								NE_type
-							]
-						}
-						result_obj["result"].append({
-							"value"		:	value_obj,
-							"id"		:	f"ANNOT_{annot_count}",
-							"from_name"	:	"label",
-							"to_name"	:	"text",
-							"type"		:	"labels"
-						})
-						start_index	=	None
-						end_index	=	None
-						NE_type		=	None
-						occupied_offsets[j["id"]].append((start_index,end_index))
-						annot_count	+=	1
-				if prediction[k].startswith('B-') or prediction[k].startswith('S-'):
-					start_index	=	X_offsets[k][0]
-					end_index	=	X_offsets[k][1]
-					NE_type		=	prediction[k][2:]
-				
-				elif prediction[k].startswith('I-') or prediction[k].startswith('E-'):
-					end_index	=	X_offsets[k][1]
-			
-			if start_index != None:
-				value_obj	=	{
-					"start"		:	start_index,
-					"end"		:	end_index,
-					"text"		:	text[start_index:end_index],
-					"labels"	:	[
-						NE_type
-					]
-				}
-				result_obj["result"].append({
-					"value"		:	value_obj,
-					"id"		:	f"ANNOT_{annot_count}",
-					"from_name"	:	"label",
-					"to_name"	:	"text",
-					"type"		:	"labels"
-				})
-				start_index	=	None
-				end_index	=	None
-				NE_type		=	None
-				occupied_offsets[j["id"]].append((start_index,end_index))
-				annot_count	+=	1
-
-			j["annotations"].append(result_obj)
-			'''
 			j_count	+=	1
 		
 		########
