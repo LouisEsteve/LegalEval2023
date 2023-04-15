@@ -9,6 +9,8 @@ import matplotlib.colors as colors
 
 config_path	=	'L_NER_analysis_config.json'
 
+SAVE_AS_FIG	=	False
+
 '''
 SUGGESTED RUNS:
 - confusion_matrix_based_on_full_annotations -> true
@@ -105,9 +107,13 @@ def main() -> int:
 					subplots	=	True,
 					ylim		=	(0.0,1.0),
 				)
-	axes[1].legend(loc=2)
+	# axes[1].legend(loc=2)
 
-	plt.show()
+	if SAVE_AS_FIG:
+		plt.savefig('figure_bars.png')
+		plt.close()
+	else:
+		plt.show()
 
 	########
 	# Make a confusion matrix based on the different classes, and then display it; it is strongly recommended to have "remove_IOB" set to true in the configuration file if confusion_matrix_based_on_full_annotations is set to false, mostly for readability of the plot
@@ -229,13 +235,28 @@ def main() -> int:
 
 	plt.matshow(df_ct,cmap=plt.cm.Blues,norm='symlog')
 
-	plt.xlabel('y_predict')
-	plt.ylabel('y_value')
-	plt.xticks(np.arange(len(df_ct.columns)), df_ct.columns, rotation=90)
-	plt.yticks(np.arange(len(df_ct.columns)), df_ct.columns)
+	# plt.xlabel('y_predict')
+	# plt.ylabel('y_value')
+	plt.xlabel('System prediction')
+	plt.ylabel('True label')
+	# plt.xticks(np.arange(len(df_ct.columns)), df_ct.columns, rotation=90)
+	# plt.yticks(np.arange(len(df_ct.columns)), df_ct.columns)
+	xticks = []
+	yticks = []
+	for i in range(len(df_ct.columns)):
+		xticks.append(f'({i+1}) {df_ct.columns[i]}')
+		yticks.append(f'({i+1})')
+	plt.xticks(np.arange(len(df_ct.columns)), xticks, rotation=90)
+	plt.yticks(np.arange(len(df_ct.columns)), yticks)
 	plt.colorbar()
+	
+	plt.rcParams.update({'font.size': 6})
 
-	plt.show()
+	if SAVE_AS_FIG:
+		plt.savefig('figure_matrix.png')
+		plt.close()
+	else:
+		plt.show()
 
 	########
 	# In preparation of finding overlapping sentences, determine the most overlapping classes
