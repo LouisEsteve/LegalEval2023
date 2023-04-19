@@ -98,6 +98,8 @@ def main() -> int:
 	df_results	=	pd.DataFrame.from_dict(cr_dict, orient='index')
 	print(df_results)
 	print(f'{"-"*64}')
+	
+	df_results.to_latex('classification_report.tex')
 
 	########
 	# Make a plot for precision, recall, F1-score
